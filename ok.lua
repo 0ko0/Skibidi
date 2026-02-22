@@ -863,12 +863,14 @@ local function createList(option, parent, holder)
 	local valueCount = 0
 	local items = {}
 	
-	local main = library:Create("Frame", {
+	
+	option.main = library:Create("Frame", {
 		LayoutOrder = option.position,
 		Size = UDim2.new(1, 0, 0, 52),
 		BackgroundTransparency = 1,
 		Parent = parent.content
 	})
+	local main = option.main
 	
 	local round = library:Create("ImageLabel", {
 		Position = UDim2.new(0, 6, 0, 4),
@@ -906,7 +908,6 @@ local function createList(option, parent, holder)
 		TextTruncate = Enum.TextTruncate.AtEnd, 
 		Parent = main
 	})
-	
 	
 	local function updateDisplayText()
 		if option.multiselect then
@@ -1029,6 +1030,9 @@ local function createList(option, parent, holder)
 				option.mainHolder.Visible = true
 				searchBox.Text = "" 
 				
+				
+				task.wait()
+				
 				local absPos = main.AbsolutePosition
 				local targetHeight = updateDropdownSize()
 				local viewportY = workspace.CurrentCamera.ViewportSize.Y
@@ -1073,7 +1077,16 @@ local function createList(option, parent, holder)
 				item.instance.Visible = false
 			end
 		end
-		updateDropdownSize()
+		
+		task.spawn(function()
+			task.wait()
+			if option.open then
+				local targetHeight = updateDropdownSize()
+				tweenService:Create(option.mainHolder, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					Size = UDim2.new(0, round.AbsoluteSize.X, 0, targetHeight)
+				}):Play()
+			end
+		end)
 	end)
 	
 	function option:AddValue(value)
@@ -2075,25 +2088,27 @@ function library:Close()
 end
 
 inputService.InputBegan:connect(function(input)
-	if input.UserInputType == ui then
+	if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 		if library.activePopup then
-			if input.Position.X < library.activePopup.mainHolder.AbsolutePosition.X or input.Position.Y < library.activePopup.mainHolder.AbsolutePosition.Y then
-				library.activePopup:Close()
+			local mx, my = input.Position.X, input.Position.Y
+			
+			local popup = library.activePopup.mainHolder
+			local header = library.activePopup.main 
+			
+			local inPopup = false
+			if popup and popup.Visible then
+				inPopup = (mx >= popup.AbsolutePosition.X and mx <= popup.AbsolutePosition.X + popup.AbsoluteSize.X) and 
+						  (my >= popup.AbsolutePosition.Y and my <= popup.AbsolutePosition.Y + popup.AbsoluteSize.Y)
 			end
-		end
-		if library.activePopup then
-			if input.Position.X > library.activePopup.mainHolder.AbsolutePosition.X + library.activePopup.mainHolder.AbsoluteSize.X or input.Position.Y > library.activePopup.mainHolder.AbsolutePosition.Y + library.activePopup.mainHolder.AbsoluteSize.Y then
-				library.activePopup:Close()
+			
+			local inHeader = false
+			if header then
+				inHeader = (mx >= header.AbsolutePosition.X and mx <= header.AbsolutePosition.X + header.AbsoluteSize.X) and 
+						   (my >= header.AbsolutePosition.Y and my <= header.AbsolutePosition.Y + header.AbsoluteSize.Y)
 			end
-		end
-	elseif input.UserInputType == Enum.UserInputType.Touch then
-		if library.activePopup then
-			if input.Position.X < library.activePopup.mainHolder.AbsolutePosition.X or input.Position.Y < library.activePopup.mainHolder.AbsolutePosition.Y then
-				library.activePopup:Close()
-			end
-		end
-		if library.activePopup then
-			if input.Position.X > library.activePopup.mainHolder.AbsolutePosition.X + library.activePopup.mainHolder.AbsoluteSize.X or input.Position.Y > library.activePopup.mainHolder.AbsolutePosition.Y + library.activePopup.mainHolder.AbsoluteSize.Y then
+			
+		
+			if not inPopup and not inHeader then
 				library.activePopup:Close()
 			end
 		end
