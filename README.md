@@ -127,6 +127,17 @@ tab:AddBox({
 ```
 
 
+### Adding Notification
+```lua
+library:Notify({
+    Title = "hello",
+    Text = "hello",
+    Duration = 5,
+    Type = "success" -- "info", "success", "warning", "error"
+})
+```
+
+
 
 ### Adding Bind
 ```lua
@@ -135,8 +146,7 @@ tab:AddBind({
     key = "RightControl", 
     hold = false, -- true: Hold the key to activate || false: Press the key to activate
     flag = "bind",
-    callback = function(Holding)
-        
+    callback = function(Holding)        
         library:Close()
     end
 })
