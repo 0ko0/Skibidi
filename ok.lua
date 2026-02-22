@@ -2121,6 +2121,205 @@ inputService.InputChanged:connect(function(input)
 	end
 end)
 
+function library:Notify(options)
+	options = typeof(options) == "table" and options or {}
+	local titleText = tostring(options.Title or "Notification")
+	local descText = tostring(options.Text or "")
+	local duration = tonumber(options.Duration) or 5
+	local notifType = string.lower(tostring(options.Type or "info"))
+
+
+	local typeColors = {
+		info = Color3.fromRGB(255, 255, 255),
+		success = Color3.fromRGB(60, 255, 110),
+		warning = Color3.fromRGB(255, 200, 60),
+		error = Color3.fromRGB(255, 80, 80)
+	}
+	local accentColor = typeColors[notifType] or typeColors.info
+
+	
+	if not self.base then
+		self.base = self:Create("ScreenGui", {
+			Name = "skibidi_notify",
+			Parent = game:GetService("CoreGui"),
+			ResetOnSpawn = true
+		})
+	end
+
+	
+	if not self.notifContainer then
+		self.notifContainer = self:Create("Frame", {
+			Name = "NotificationContainer",
+			Size = UDim2.new(0, 300, 1, -40),
+			Position = UDim2.new(1, -320, 0, 20),
+			BackgroundTransparency = 1,
+			Parent = self.base
+		})
+
+		self:Create("UIListLayout", {
+			Parent = self.notifContainer,
+			VerticalAlignment = Enum.VerticalAlignment.Bottom,
+			HorizontalAlignment = Enum.HorizontalAlignment.Right,
+			Padding = UDim.new(0, 12),
+			SortOrder = Enum.SortOrder.LayoutOrder
+		})
+	end
+
+	
+	local titleSize = 16
+	local descSize = 14
+	local descBounds = textService:GetTextSize(
+		descText, 
+		descSize, 
+		Enum.Font.Gotham, 
+		Vector2.new(250, 9e9) 
+	)
+	
+	local targetHeight = descText == "" and 45 or (45 + descBounds.Y + 5)
+
+	
+	local holder = self:Create("Frame", {
+		Size = UDim2.new(1, 0, 0, targetHeight),
+		BackgroundTransparency = 1,
+		Parent = self.notifContainer
+	})
+
+	
+	local mainCard = self:Create("Frame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		Position = UDim2.new(1, 400, 0, 0), 
+		BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+		Parent = holder
+	})
+
+	self:Create("UICorner", {
+		CornerRadius = UDim.new(0, 6),
+		Parent = mainCard
+	})
+
+	self:Create("UIStroke", {
+		Color = Color3.fromRGB(50, 50, 50),
+		Thickness = 1,
+		Parent = mainCard
+	})
+
+	
+	local accentLine = self:Create("Frame", {
+		Size = UDim2.new(0, 3, 1, -12),
+		Position = UDim2.new(0, 6, 0.5, 0),
+		AnchorPoint = Vector2.new(0, 0.5),
+		BackgroundColor3 = accentColor,
+		BorderSizePixel = 0,
+		Parent = mainCard
+	})
+	self:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
+
+	
+	local titleLbl = self:Create("TextLabel", {
+		Size = UDim2.new(1, -25, 0, 20),
+		Position = UDim2.new(0, 18, 0, 8),
+		BackgroundTransparency = 1,
+		Text = titleText,
+		TextSize = titleSize,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(240, 240, 240),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = mainCard
+	})
+
+	
+	if descText ~= "" then
+		self:Create("TextLabel", {
+			Size = UDim2.new(1, -25, 0, descBounds.Y),
+			Position = UDim2.new(0, 18, 0, 30),
+			BackgroundTransparency = 1,
+			Text = descText,
+			TextSize = descSize,
+			Font = Enum.Font.Gotham,
+			TextColor3 = Color3.fromRGB(180, 180, 180),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			TextWrapped = true,
+			Parent = mainCard
+		})
+	end
+
+	
+	local progressBg = self:Create("Frame", {
+		Size = UDim2.new(1, 0, 0, 2),
+		Position = UDim2.new(0, 0, 1, -2),
+		BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		Parent = mainCard
+	})
+	self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = progressBg })
+
+	local progressFill = self:Create("Frame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundColor3 = accentColor,
+		BorderSizePixel = 0,
+		Parent = progressBg
+	})
+
+	
+	local isClosing = false
+	local function closeNotif()
+		if isClosing then return end
+		isClosing = true
+
+		
+		tweenService:Create(mainCard, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+			Position = UDim2.new(1, 400, 0, 0)
+		}):Play()
+
+		task.wait(0.4)
+
+		
+		local shrinkTween = tweenService:Create(holder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(1, 0, 0, 0)
+		})
+		shrinkTween:Play()
+		shrinkTween.Completed:Wait()
+
+		holder:Destroy()
+	end
+
+	
+	local clickBtn = self:Create("TextButton", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = "",
+		ZIndex = 10,
+		Parent = mainCard
+	})
+	
+	clickBtn.MouseButton1Click:Connect(closeNotif)
+
+	
+	pcall(function()
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://4590662766"
+		sound.Volume = 0.5
+		sound.Parent = game.Workspace
+		sound:Play()
+		game.Debris:AddItem(sound, 2)
+	end)
+
+	tweenService:Create(mainCard, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Position = UDim2.new(0, 0, 0, 0)
+	}):Play()
+
+	local progressTween = tweenService:Create(progressFill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+		Size = UDim2.new(0, 0, 1, 0)
+	})
+	progressTween:Play()
+
+	task.delay(duration, function()
+		closeNotif()
+	end)
+end
+
 wait(1)
 local VirtualUser=game:service'VirtualUser'
 game:service('Players').LocalPlayer.Idled:connect(function()
