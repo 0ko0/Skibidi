@@ -72,7 +72,6 @@ tab:AddSlider({
         print("speed", Value)
     end
 })
-})
 ```
 
 
