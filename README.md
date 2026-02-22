@@ -49,7 +49,7 @@ tab:AddToggle({
 
 ### Adding Label
 ```lua
-MainTab:AddLabel({
+tab:AddLabel({
     text = "hello",
     align = "Left" -- "Left", "Center", "Right"
 })
@@ -112,7 +112,7 @@ tab:AddList({
 
 ### Adding textbox
 ```lua
-MainTab:AddBox({
+tab:AddBox({
     text = "test",
     value = "", 
     placeholder = "type here...",
