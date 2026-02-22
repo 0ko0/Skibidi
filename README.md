@@ -102,7 +102,7 @@ tab:AddList({
     values = {"1", "2", "3"},
     value = "1", 
     multiselect = false, 
-    flag = "TargetList",
+    flag = "List",
     callback = function(Value)
         print("select:", Value)
     end
