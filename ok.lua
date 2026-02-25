@@ -2152,16 +2152,13 @@ function library:Watermark(options)
 		Visible = true
 	}
 
-	
 	if options.Title ~= nil then self.wmSettings.Title = tostring(options.Title) end
 	if options.Visible ~= nil then self.wmSettings.Visible = options.Visible end
 	if options.Color ~= nil then 
 		self.wmSettings.Color = options.Color 
-		
 		if options.Rainbow == nil then self.wmSettings.Rainbow = false end
 	end
 	if options.Rainbow ~= nil then self.wmSettings.Rainbow = options.Rainbow end
-
 
 	if not self.base then
 		self.base = self:Create("ScreenGui", {
@@ -2222,7 +2219,7 @@ function library:Watermark(options)
 		local accentGradient = self:Create("UIGradient", { Parent = accentLine })
 
 		local wmText = self:Create("TextLabel", {
-			Size = UDim2.new(0, 9999, 1, 0),
+			Size = UDim2.new(1, -20, 1, 0),
 			Position = UDim2.new(0, 10, 0, 0),
 			BackgroundTransparency = 1,
 			Text = "",
@@ -2235,7 +2232,6 @@ function library:Watermark(options)
 		})
 
 		local isCollapsed = false
-
 		local wmDragging, wmDragInput, wmDragStart, wmStartPos
 		local dragStartTime = 0
 
@@ -2278,32 +2274,16 @@ function library:Watermark(options)
 			end
 		end)
 
-		
-		local currentFPS = 0
-		local frameCount = 0
-		local lastFpsTime = os.clock()
-
-		runService.RenderStepped:Connect(function()
-			frameCount = frameCount + 1
-			local currentTime = os.clock()
-			if currentTime - lastFpsTime >= 1 then
-				currentFPS = frameCount
-				frameCount = 0
-				lastFpsTime = currentTime
-			end
-		end)
-
-		
 		local lastTargetWidth = 0
 		local localPlayer = game:GetService("Players").LocalPlayer
+		local stats = game:GetService("Stats")
 
-		runService.Heartbeat:Connect(function()
+		
+		runService.RenderStepped:Connect(function(deltaTime)
 			if not self.watermark.Visible then return end
 			local settings = self.wmSettings
 
-			
 			if settings.Rainbow then
-				
 				local h = tick() % 5 / 5
 				local color1 = Color3.fromHSV(h, 1, 1)
 				local color2 = Color3.fromHSV((h + 0.1) % 1, 1, 1)
@@ -2317,7 +2297,6 @@ function library:Watermark(options)
 				accentGradient.Color = seq
 				shadow.ImageColor3 = color1
 			else
-				
 				local c = settings.Color
 				local h, s, v = Color3.toHSV(c)
 				local color2 = Color3.fromHSV(h, s, math.clamp(v - 0.2, 0, 1))
@@ -2332,35 +2311,51 @@ function library:Watermark(options)
 				shadow.ImageColor3 = c
 			end
 
-			
 			local targetWidth = 0
 
 			if isCollapsed then
-				wmText.Text = string.format("<b>%s</b>", settings.Title)
-				local textBounds = textService:GetTextSize(settings.Title, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-				targetWidth = textBounds.X + 20
+				
+				local firstChar = string.sub(settings.Title, 1, 1)
+				wmText.Text = string.format("<b>%s</b>", firstChar)
+				
+				wmText.TextXAlignment = Enum.TextXAlignment.Center
+				wmText.Size = UDim2.new(1, 0, 1, 0)
+				wmText.Position = UDim2.new(0, 0, 0, 0)
+				
+				targetWidth = 30
 			else
+				
+				local currentFPS = math.round(1 / deltaTime)
+
+				
 				local ping = 0
-				pcall(function() ping = math.round(localPlayer:GetNetworkPing() * 1000) end)
+				pcall(function() 
+					ping = math.round(stats.Network.ServerStatsItem["Data Ping"]:GetValue()) 
+				end)
 				if ping == 0 then
-					pcall(function() ping = math.round(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+					pcall(function() ping = math.round(localPlayer:GetNetworkPing() * 1000) end)
 				end
 
-				local timeStr = os.date("%H:%M:%S")
+				
+				local timeStr = DateTime.now():FormatLocalTime("HH:mm:ss", "en-us")
+				
 				local playerName = localPlayer.Name
 				
 				local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", settings.Title, playerName, currentFPS, ping, timeStr)
 				wmText.Text = finalText
 
+				wmText.TextXAlignment = Enum.TextXAlignment.Left
+				wmText.Size = UDim2.new(1, -20, 1, 0)
+				wmText.Position = UDim2.new(0, 10, 0, 0)
+
 				local stripText = string.format("%s | %s | %d FPS | %dms | %s", settings.Title, playerName, currentFPS, ping, timeStr)
 				local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-				targetWidth = textBounds.X + 26
+				targetWidth = textBounds.X + 20 
 			end
 
-			
 			if targetWidth ~= lastTargetWidth then
 				lastTargetWidth = targetWidth
-				tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
 					Size = UDim2.new(0, targetWidth, 0, 30)
 				}):Play()
 			end
