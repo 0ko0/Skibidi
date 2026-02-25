@@ -2152,15 +2152,12 @@ function library:Watermark(options)
 			Name = "skibidi",
 			Parent = game:GetService("CoreGui"),
 			ResetOnSpawn = true,
-			IgnoreGuiInset = true 
+			IgnoreGuiInset = true
 		})
 	end
-	
-	
 	self.base.IgnoreGuiInset = true
 
 	if not self.watermark then
-		
 		self.watermark = self:Create("Frame", {
 			Name = "Watermark",
 			Position = UDim2.new(0, 15, 0, 15),
@@ -2173,10 +2170,8 @@ function library:Watermark(options)
 			Active = true
 		})
 
-	
 		self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.watermark })
 
-	
 		local stroke = self:Create("UIStroke", {
 			Color = Color3.fromRGB(255, 255, 255),
 			Thickness = 1.2,
@@ -2186,7 +2181,6 @@ function library:Watermark(options)
 		})
 		local strokeGradient = self:Create("UIGradient", { Rotation = 45, Parent = stroke })
 
-	
 		local shadow = self:Create("ImageLabel", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -2201,7 +2195,6 @@ function library:Watermark(options)
 			Parent = self.watermark
 		})
 
-	
 		local accentLine = self:Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 2),
 			Position = UDim2.new(0, 0, 0, 0),
@@ -2212,7 +2205,6 @@ function library:Watermark(options)
 		self:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
 		local accentGradient = self:Create("UIGradient", { Parent = accentLine })
 
-	
 		local wmText = self:Create("TextLabel", {
 			Size = UDim2.new(0, 9999, 1, 0),
 			Position = UDim2.new(0, 10, 0, 0),
@@ -2226,43 +2218,30 @@ function library:Watermark(options)
 			Parent = self.watermark
 		})
 
-		
 		local isCollapsed = false
 
 		
-		local wmDragging = false
-		local wmDragInput = nil
-		local wmDragStart = nil
-		local wmStartPos = nil
+		local wmDragging, wmDragInput, wmDragStart, wmStartPos
 		local dragStartTime = 0
 
-	
 		self.watermark.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				wmDragging = true
-				wmDragInput = input 
+				wmDragInput = input
 				wmDragStart = input.Position
 				wmStartPos = self.watermark.Position
 				dragStartTime = tick()
 			end
 		end)
 
-		
 		inputService.InputChanged:Connect(function(input)
 			if input == wmDragInput and wmDragging then
 				local delta = input.Position - wmDragStart
-				
-				
 				if delta.Magnitude > 3 then 
-					local newX = wmStartPos.X.Offset + delta.X
-					local newY = wmStartPos.Y.Offset + delta.Y
-					
-					
 					local viewport = workspace.CurrentCamera.ViewportSize
 					local wmSize = self.watermark.AbsoluteSize
-					
-					newX = math.clamp(newX, 0, viewport.X - wmSize.X)
-					newY = math.clamp(newY, 0, viewport.Y - wmSize.Y)
+					local newX = math.clamp(wmStartPos.X.Offset + delta.X, 0, viewport.X - wmSize.X)
+					local newY = math.clamp(wmStartPos.Y.Offset + delta.Y, 0, viewport.Y - wmSize.Y)
 
 					tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 						Position = UDim2.new(0, newX, 0, newY)
@@ -2271,13 +2250,10 @@ function library:Watermark(options)
 			end
 		end)
 
-		
 		inputService.InputEnded:Connect(function(input)
 			if input == wmDragInput then
 				wmDragging = false
 				wmDragInput = nil
-				
-		
 				if tick() - dragStartTime < 0.3 then 
 					local delta = input.Position - wmDragStart
 					if delta.Magnitude < 5 then 
@@ -2288,7 +2264,26 @@ function library:Watermark(options)
 		end)
 
 		
+		local currentFPS = 0
+		local frameCount = 0
+		local lastFpsTime = os.clock()
+
+		runService.RenderStepped:Connect(function()
+			frameCount = frameCount + 1
+			local currentTime = os.clock()
+			if currentTime - lastFpsTime >= 1 then
+				currentFPS = frameCount
+				frameCount = 0
+				lastFpsTime = currentTime
+			end
+		end)
+
+		
+		local lastTargetWidth = 0
+		local localPlayer = game:GetService("Players").LocalPlayer
+
 		runService.Heartbeat:Connect(function()
+	
 			if chromaColor then
 				local h, s, v = Color3.toHSV(chromaColor)
 				local color1 = Color3.fromHSV(h, s, v)
@@ -2303,45 +2298,49 @@ function library:Watermark(options)
 				accentGradient.Color = seq
 				shadow.ImageColor3 = color1
 			end
-		end)
 
-		
-		local fps = 0
-		runService.RenderStepped:Connect(function(dt)
-			fps = math.floor(1 / dt)
-		end)
+			
+			if self.watermark.Visible then
+				local targetWidth = 0
 
-		task.spawn(function()
-			while task.wait(0.5) do
-				if self.watermark.Visible then
-					if isCollapsed then
+				if isCollapsed then
 					
-						wmText.Text = string.format("<b>%s</b>", title)
-						local textBounds = textService:GetTextSize(title, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+					wmText.Text = string.format("<b>%s</b>", title)
+					local textBounds = textService:GetTextSize(title, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+					targetWidth = textBounds.X + 20
+				else
+					
+					local ping = 0
+					pcall(function()
 						
-						tweenService:Create(self.watermark, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-							Size = UDim2.new(0, textBounds.X + 20, 0, 30)
-						}):Play()
-					else
-					
-						local ping = "0"
+						ping = math.round(localPlayer:GetNetworkPing() * 1000)
+					end)
+					if ping == 0 then 
 						pcall(function()
-							ping = string.split(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString(), " ")[1]
+							ping = math.round(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
 						end)
-						
-						local timeStr = os.date("%H:%M:%S")
-						local player = game:GetService("Players").LocalPlayer.Name
-						
-						local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%sms</font> <font color='#666666'>|</font> %s", title, player, fps, ping, timeStr)
-						wmText.Text = finalText
-
-						local stripText = string.format("%s | %s | %d FPS | %sms | %s", title, player, fps, ping, timeStr)
-						local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-						
-						tweenService:Create(self.watermark, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-							Size = UDim2.new(0, textBounds.X + 26, 0, 30)
-						}):Play()
 					end
+
+					
+					local timeStr = os.date("%H:%M:%S")
+					local playerName = localPlayer.Name
+					
+					
+					local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", title, playerName, currentFPS, ping, timeStr)
+					wmText.Text = finalText
+
+				
+					local stripText = string.format("%s | %s | %d FPS | %dms | %s", title, playerName, currentFPS, ping, timeStr)
+					local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+					targetWidth = textBounds.X + 26
+				end
+
+				
+				if targetWidth ~= lastTargetWidth then
+					lastTargetWidth = targetWidth
+					tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						Size = UDim2.new(0, targetWidth, 0, 30)
+					}):Play()
 				end
 			end
 		end)
