@@ -66,6 +66,8 @@ end
 
 local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	local size = subHolder and 34 or 40
+	local MAX_MENU_HEIGHT = 450 
+
 	parentTable.main = library:Create("ImageButton", {
 		LayoutOrder = subHolder and parentTable.position or 0,
 		Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20),
@@ -126,10 +128,15 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		Parent = closeHolder
 	})
 	
-	parentTable.content = library:Create("Frame", {
+	parentTable.content = library:Create("ScrollingFrame", {
 		Position = UDim2.new(0, 0, 0, size),
 		Size = UDim2.new(1, 0, 1, -size),
 		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 3, 
+		ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255), 
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
 		Parent = parentTable.main
 	})
 	
@@ -138,9 +145,12 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		Parent = parentTable.content
 	})
 	
+	
 	layout.Changed:connect(function()
-		parentTable.content.Size = UDim2.new(1, 0, 0, layout.AbsoluteContentSize.Y)
-		parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size)
+		parentTable.content.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 5)
+		local targetHeight = math.min(layout.AbsoluteContentSize.Y + size, MAX_MENU_HEIGHT)
+		
+		parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, targetHeight) or UDim2.new(0, 230, 0, size)
 	end)
 	
 	if not subHolder then
@@ -149,12 +159,7 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 		})
 		
 		title.InputBegan:connect(function(input)
-			if input.UserInputType == ui then
-				dragObject = parentTable.main
-				dragging = true
-				dragStart = input.Position
-				startPos = dragObject.Position
-			elseif input.UserInputType == Enum.UserInputType.Touch then
+			if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 				dragObject = parentTable.main
 				dragging = true
 				dragStart = input.Position
@@ -162,23 +167,20 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 			end
 		end)
 		title.InputChanged:connect(function(input)
-			if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-				dragInput = input
-			elseif dragging and input.UserInputType == Enum.UserInputType.Touch then
+			if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 				dragInput = input
 			end
 		end)
-			title.InputEnded:connect(function(input)
-			if input.UserInputType == ui then
-				dragging = false
-			elseif input.UserInputType == Enum.UserInputType.Touch then
+		title.InputEnded:connect(function(input)
+			if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = false
 			end
 		end)
 	end
 	
 	closeHolder.InputBegan:connect(function(input)
-		if input.UserInputType == ui then
+		
+		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 			parentTable.open = not parentTable.open
 			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
 			if subHolder then
@@ -186,16 +188,9 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 			else
 				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
 			end
-			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
-		elseif input.UserInputType == Enum.UserInputType.Touch then
-			parentTable.open = not parentTable.open
-			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
-			if subHolder then
-				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
-			else
-				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
-			end
-			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
+			
+			local targetHeight = math.min(layout.AbsoluteContentSize.Y + size, MAX_MENU_HEIGHT)
+			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, targetHeight) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
 		end
 	end)
 
@@ -2314,7 +2309,7 @@ function library:Notify(options)
 	
 	pcall(function()
 		local sound = Instance.new("Sound")
-		sound.SoundId = "rbxassetid://4590662766"
+		sound.SoundId = "rbxassetid://"
 		sound.Volume = 0.5
 		sound.Parent = game.Workspace
 		sound:Play()
