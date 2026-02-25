@@ -2142,7 +2142,7 @@ end
 
 local UIToggle
 
-function library:SetWatermark(options)
+function library:Watermark(options)
 	options = typeof(options) == "table" and options or {}
 	local title = tostring(options.Title or "Skibidi Hub")
 	local visible = options.Visible ~= false
@@ -2151,12 +2151,16 @@ function library:SetWatermark(options)
 		self.base = self:Create("ScreenGui", {
 			Name = "skibidi",
 			Parent = game:GetService("CoreGui"),
-			ResetOnSpawn = true
+			ResetOnSpawn = true,
+			IgnoreGuiInset = true 
 		})
 	end
+	
+	
+	self.base.IgnoreGuiInset = true
 
 	if not self.watermark then
-	
+		
 		self.watermark = self:Create("Frame", {
 			Name = "Watermark",
 			Position = UDim2.new(0, 15, 0, 15),
@@ -2164,18 +2168,15 @@ function library:SetWatermark(options)
 			BackgroundColor3 = Color3.fromRGB(15, 15, 15),
 			BackgroundTransparency = 0.3,
 			BorderSizePixel = 0,
-			ClipsDescendants = false,
+			ClipsDescendants = true,
 			Parent = self.base,
 			Active = true
 		})
 
-		
-		self:Create("UICorner", {
-			CornerRadius = UDim.new(0, 6),
-			Parent = self.watermark
-		})
+	
+		self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.watermark })
 
-		
+	
 		local stroke = self:Create("UIStroke", {
 			Color = Color3.fromRGB(255, 255, 255),
 			Thickness = 1.2,
@@ -2183,14 +2184,9 @@ function library:SetWatermark(options)
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Parent = self.watermark
 		})
+		local strokeGradient = self:Create("UIGradient", { Rotation = 45, Parent = stroke })
 
-		
-		local strokeGradient = self:Create("UIGradient", {
-			Rotation = 45,
-			Parent = stroke
-		})
-
-		
+	
 		local shadow = self:Create("ImageLabel", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -2205,7 +2201,7 @@ function library:SetWatermark(options)
 			Parent = self.watermark
 		})
 
-		
+	
 		local accentLine = self:Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 2),
 			Position = UDim2.new(0, 0, 0, 0),
@@ -2214,13 +2210,11 @@ function library:SetWatermark(options)
 			Parent = self.watermark
 		})
 		self:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
-		
-		local accentGradient = self:Create("UIGradient", {
-			Parent = accentLine
-		})
+		local accentGradient = self:Create("UIGradient", { Parent = accentLine })
 
+	
 		local wmText = self:Create("TextLabel", {
-			Size = UDim2.new(1, -20, 1, 0),
+			Size = UDim2.new(0, 9999, 1, 0),
 			Position = UDim2.new(0, 10, 0, 0),
 			BackgroundTransparency = 1,
 			Text = title,
@@ -2233,33 +2227,68 @@ function library:SetWatermark(options)
 		})
 
 		
-		local wmDragging, wmDragInput, wmDragStart, wmStartPos
+		local isCollapsed = false
+
+		
+		local wmDragging = false
+		local wmDragInput = nil
+		local wmDragStart = nil
+		local wmStartPos = nil
+		local dragStartTime = 0
+
+	
 		self.watermark.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				wmDragging = true
+				wmDragInput = input 
 				wmDragStart = input.Position
 				wmStartPos = self.watermark.Position
+				dragStartTime = tick()
 			end
 		end)
-		self.watermark.InputChanged:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-				wmDragInput = input
+
+		
+		inputService.InputChanged:Connect(function(input)
+			if input == wmDragInput and wmDragging then
+				local delta = input.Position - wmDragStart
+				
+				
+				if delta.Magnitude > 3 then 
+					local newX = wmStartPos.X.Offset + delta.X
+					local newY = wmStartPos.Y.Offset + delta.Y
+					
+					
+					local viewport = workspace.CurrentCamera.ViewportSize
+					local wmSize = self.watermark.AbsoluteSize
+					
+					newX = math.clamp(newX, 0, viewport.X - wmSize.X)
+					newY = math.clamp(newY, 0, viewport.Y - wmSize.Y)
+
+					tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						Position = UDim2.new(0, newX, 0, newY)
+					}):Play()
+				end
 			end
 		end)
+
+		
 		inputService.InputEnded:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			if input == wmDragInput then
 				wmDragging = false
+				wmDragInput = nil
+				
+		
+				if tick() - dragStartTime < 0.3 then 
+					local delta = input.Position - wmDragStart
+					if delta.Magnitude < 5 then 
+						isCollapsed = not isCollapsed
+					end
+				end
 			end
 		end)
+
+		
 		runService.Heartbeat:Connect(function()
-			if wmDragging and wmDragInput then
-				local delta = wmDragInput.Position - wmDragStart
-				tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-					Position = UDim2.new(wmStartPos.X.Scale, wmStartPos.X.Offset + delta.X, wmStartPos.Y.Scale, wmStartPos.Y.Offset + delta.Y)
-				}):Play()
-			end
-			
-			
 			if chromaColor then
 				local h, s, v = Color3.toHSV(chromaColor)
 				local color1 = Color3.fromHSV(h, s, v)
@@ -2272,7 +2301,7 @@ function library:SetWatermark(options)
 				
 				strokeGradient.Color = seq
 				accentGradient.Color = seq
-				shadow.ImageColor3 = color1 
+				shadow.ImageColor3 = color1
 			end
 		end)
 
@@ -2285,27 +2314,34 @@ function library:SetWatermark(options)
 		task.spawn(function()
 			while task.wait(0.5) do
 				if self.watermark.Visible then
-					local ping = "0"
-					pcall(function()
+					if isCollapsed then
+					
+						wmText.Text = string.format("<b>%s</b>", title)
+						local textBounds = textService:GetTextSize(title, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
 						
-						ping = string.split(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString(), " ")[1]
-					end)
+						tweenService:Create(self.watermark, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
+							Size = UDim2.new(0, textBounds.X + 20, 0, 30)
+						}):Play()
+					else
 					
-					local timeStr = os.date("%H:%M:%S")
-					local player = game:GetService("Players").LocalPlayer.Name
-					
-					
-					local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%sms</font> <font color='#666666'>|</font> %s", title, player, fps, ping, timeStr)
-					
-					wmText.Text = finalText
+						local ping = "0"
+						pcall(function()
+							ping = string.split(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString(), " ")[1]
+						end)
+						
+						local timeStr = os.date("%H:%M:%S")
+						local player = game:GetService("Players").LocalPlayer.Name
+						
+						local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%sms</font> <font color='#666666'>|</font> %s", title, player, fps, ping, timeStr)
+						wmText.Text = finalText
 
-					
-					local stripText = string.format("%s | %s | %d FPS | %sms | %s", title, player, fps, ping, timeStr)
-					local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-					
-					tweenService:Create(self.watermark, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-						Size = UDim2.new(0, textBounds.X + 26, 0, 30)
-					}):Play()
+						local stripText = string.format("%s | %s | %d FPS | %sms | %s", title, player, fps, ping, timeStr)
+						local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+						
+						tweenService:Create(self.watermark, TweenInfo.new(0.4, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
+							Size = UDim2.new(0, textBounds.X + 26, 0, 30)
+						}):Play()
+					end
 				end
 			end
 		end)
