@@ -2232,6 +2232,7 @@ function library:Watermark(options)
 		})
 
 		local isCollapsed = false
+		local forceUpdate = true 
 		local wmDragging, wmDragInput, wmDragStart, wmStartPos
 		local dragStartTime = 0
 
@@ -2269,6 +2270,7 @@ function library:Watermark(options)
 					local delta = input.Position - wmDragStart
 					if delta.Magnitude < 5 then 
 						isCollapsed = not isCollapsed
+						forceUpdate = true 
 					end
 				end
 			end
@@ -2278,11 +2280,18 @@ function library:Watermark(options)
 		local localPlayer = game:GetService("Players").LocalPlayer
 		local stats = game:GetService("Stats")
 
+		local lastStatsUpdate = 0
+		local frames = 0
+		local displayFPS = 0
+		local displayPing = 0
+		local displayTime = ""
+
 		
-		runService.RenderStepped:Connect(function(deltaTime)
+		runService.RenderStepped:Connect(function()
 			if not self.watermark.Visible then return end
 			local settings = self.wmSettings
 
+			
 			if settings.Rainbow then
 				local h = tick() % 5 / 5
 				local color1 = Color3.fromHSV(h, 1, 1)
@@ -2311,53 +2320,70 @@ function library:Watermark(options)
 				shadow.ImageColor3 = c
 			end
 
-			local targetWidth = 0
+			
+			frames = frames + 1
+			local currentTime = os.clock()
 
-			if isCollapsed then
+			
+			if currentTime - lastStatsUpdate >= 0.5 or forceUpdate then
 				
-				local firstChar = string.sub(settings.Title, 1, 1)
-				wmText.Text = string.format("<b>%s</b>", firstChar)
-				
-				wmText.TextXAlignment = Enum.TextXAlignment.Center
-				wmText.Size = UDim2.new(1, 0, 1, 0)
-				wmText.Position = UDim2.new(0, 0, 0, 0)
-				
-				targetWidth = 30
-			else
-				
-				local currentFPS = math.round(1 / deltaTime)
+			
+				if currentTime - lastStatsUpdate >= 0.5 then
+					displayFPS = math.round(frames / (currentTime - lastStatsUpdate))
+					frames = 0
+					lastStatsUpdate = currentTime
 
-				
-				local ping = 0
-				pcall(function() 
-					ping = math.round(stats.Network.ServerStatsItem["Data Ping"]:GetValue()) 
-				end)
-				if ping == 0 then
-					pcall(function() ping = math.round(localPlayer:GetNetworkPing() * 1000) end)
+					local ping = 0
+					pcall(function() ping = math.round(stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+					if ping == 0 then
+						pcall(function() ping = math.round(localPlayer:GetNetworkPing() * 1000) end)
+					end
+					displayPing = ping
 				end
 
 				
-				local timeStr = DateTime.now():FormatLocalTime("HH:mm:ss", "en-us")
+				displayTime = DateTime.now():FormatLocalTime("HH:mm:ss", "en-us")
+				local targetWidth = 0
+
+				if isCollapsed then
+					
+					local firstChar = string.sub(settings.Title, 1, 1)
+					wmText.Text = string.format("<b>%s</b>", firstChar)
+					
+					wmText.TextXAlignment = Enum.TextXAlignment.Center
+					wmText.Size = UDim2.new(1, 0, 1, 0)
+					wmText.Position = UDim2.new(0, 0, 0, 0)
+					
+					targetWidth = 30
+				else
+					
+					local playerName = localPlayer.Name
+					local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", settings.Title, playerName, displayFPS, displayPing, displayTime)
+					
+					if wmText.Text ~= finalText then
+						wmText.Text = finalText
+					end
+
+					wmText.TextXAlignment = Enum.TextXAlignment.Left
+					wmText.Size = UDim2.new(1, -20, 1, 0)
+					wmText.Position = UDim2.new(0, 10, 0, 0)
+
+					
+					local stripText = string.format("%s | %s | %d FPS | %dms | %s", settings.Title, playerName, displayFPS, displayPing, displayTime)
+					local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+					targetWidth = textBounds.X + 26 
+				end
+
 				
-				local playerName = localPlayer.Name
-				
-				local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", settings.Title, playerName, currentFPS, ping, timeStr)
-				wmText.Text = finalText
+				local diff = math.abs(targetWidth - lastTargetWidth)
+				if diff > 3 or forceUpdate then
+					lastTargetWidth = targetWidth
+					tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+						Size = UDim2.new(0, targetWidth, 0, 30)
+					}):Play()
+				end
 
-				wmText.TextXAlignment = Enum.TextXAlignment.Left
-				wmText.Size = UDim2.new(1, -20, 1, 0)
-				wmText.Position = UDim2.new(0, 10, 0, 0)
-
-				local stripText = string.format("%s | %s | %d FPS | %dms | %s", settings.Title, playerName, currentFPS, ping, timeStr)
-				local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-				targetWidth = textBounds.X + 20 
-			end
-
-			if targetWidth ~= lastTargetWidth then
-				lastTargetWidth = targetWidth
-				tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, targetWidth, 0, 30)
-				}):Play()
+				forceUpdate = false
 			end
 		end)
 	end
