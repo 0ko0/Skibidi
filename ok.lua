@@ -1862,6 +1862,71 @@ local function createColor(option, parent, holder)
 	end
 end
 
+local function createDivider(option, parent)
+	local main = library:Create("Frame", {
+		LayoutOrder = option.position,
+		Size = UDim2.new(1, 0, 0, 24), 
+		BackgroundTransparency = 1,
+		Parent = parent.content
+	})
+
+	if option.text and option.text ~= "" then
+		
+		local textLabel = library:Create("TextLabel", {
+			Size = UDim2.new(0, 0, 1, 0),
+			Position = UDim2.new(0.5, 0, 0, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundTransparency = 1,
+			Text = option.text,
+			TextSize = 13,
+			Font = Enum.Font.Gotham,
+			TextColor3 = Color3.fromRGB(140, 140, 140),
+			Parent = main
+		})
+
+		local leftLine = library:Create("Frame", {
+			Size = UDim2.new(0.5, -20, 0, 1),
+			Position = UDim2.new(0, 10, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+			BorderSizePixel = 0,
+			Parent = main
+		})
+
+		local rightLine = library:Create("Frame", {
+			Size = UDim2.new(0.5, -20, 0, 1),
+			Position = UDim2.new(1, -10, 0.5, 0),
+			AnchorPoint = Vector2.new(1, 0.5),
+			BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+			BorderSizePixel = 0,
+			Parent = main
+		})
+		
+		
+		local function updateDividerSize()
+			local bounds = textService:GetTextSize(textLabel.Text, textLabel.TextSize, textLabel.Font, Vector2.new(9e9, 9e9))
+			textLabel.Size = UDim2.new(0, bounds.X + 16, 1, 0)
+			leftLine.Size = UDim2.new(0.5, -(bounds.X / 2) - 18, 0, 1)
+			rightLine.Size = UDim2.new(0.5, -(bounds.X / 2) - 18, 0, 1)
+		end
+		
+		textLabel:GetPropertyChangedSignal("TextBounds"):Connect(updateDividerSize)
+		task.spawn(updateDividerSize)
+	else
+		
+		library:Create("Frame", {
+			Size = UDim2.new(1, -20, 0, 1),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+			BorderSizePixel = 0,
+			Parent = main
+		})
+	end
+
+	return option
+end
+
 local function loadOptions(option, holder)
 	for _,newOption in next, option.options do
 		if newOption.type == "label" then
@@ -1880,6 +1945,8 @@ local function loadOptions(option, holder)
 			createSlider(newOption, option)
 		elseif newOption.type == "color" then
 			createColor(newOption, option, holder)
+		elseif newOption.type == "divider" then 
+			createDivider(newOption, option)   
 		elseif newOption.type == "folder" then
 			newOption:init()
 		end
@@ -1887,6 +1954,23 @@ local function loadOptions(option, holder)
 end
 
 local function getFnctions(parent)
+
+function parent:AddDivider(option)
+		
+		if type(option) == "string" then
+			option = {text = option}
+		else
+			option = typeof(option) == "table" and option or {}
+		end
+		
+		option.text = option.text or ""
+		option.type = "divider"
+		option.position = #self.options
+		table.insert(self.options, option)
+		
+		return option
+	end
+
 	function parent:AddLabel(option)
 		
 		if type(option) == "string" then
