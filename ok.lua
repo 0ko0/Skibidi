@@ -2142,10 +2142,26 @@ end
 
 local UIToggle
 
-function library:Watermark(options)
+function library:SetWatermark(options)
 	options = typeof(options) == "table" and options or {}
-	local title = tostring(options.Title or "Skibidi Hub")
-	local visible = options.Visible ~= false
+	
+	self.wmSettings = self.wmSettings or {
+		Title = "empty",
+		Rainbow = true,
+		Color = Color3.fromRGB(255, 255, 255), 
+		Visible = true
+	}
+
+	
+	if options.Title ~= nil then self.wmSettings.Title = tostring(options.Title) end
+	if options.Visible ~= nil then self.wmSettings.Visible = options.Visible end
+	if options.Color ~= nil then 
+		self.wmSettings.Color = options.Color 
+		
+		if options.Rainbow == nil then self.wmSettings.Rainbow = false end
+	end
+	if options.Rainbow ~= nil then self.wmSettings.Rainbow = options.Rainbow end
+
 
 	if not self.base then
 		self.base = self:Create("ScreenGui", {
@@ -2209,7 +2225,7 @@ function library:Watermark(options)
 			Size = UDim2.new(0, 9999, 1, 0),
 			Position = UDim2.new(0, 10, 0, 0),
 			BackgroundTransparency = 1,
-			Text = title,
+			Text = "",
 			TextSize = 13,
 			Font = Enum.Font.GothamSemibold,
 			TextColor3 = Color3.fromRGB(240, 240, 240),
@@ -2220,7 +2236,6 @@ function library:Watermark(options)
 
 		local isCollapsed = false
 
-		
 		local wmDragging, wmDragInput, wmDragStart, wmStartPos
 		local dragStartTime = 0
 
@@ -2283,11 +2298,15 @@ function library:Watermark(options)
 		local localPlayer = game:GetService("Players").LocalPlayer
 
 		runService.Heartbeat:Connect(function()
-	
-			if chromaColor then
-				local h, s, v = Color3.toHSV(chromaColor)
-				local color1 = Color3.fromHSV(h, s, v)
-				local color2 = Color3.fromHSV((h + 0.1) % 1, s, v)
+			if not self.watermark.Visible then return end
+			local settings = self.wmSettings
+
+			
+			if settings.Rainbow then
+				
+				local h = tick() % 5 / 5
+				local color1 = Color3.fromHSV(h, 1, 1)
+				local color2 = Color3.fromHSV((h + 0.1) % 1, 1, 1)
 				
 				local seq = ColorSequence.new({
 					ColorSequenceKeypoint.new(0, color1),
@@ -2297,56 +2316,58 @@ function library:Watermark(options)
 				strokeGradient.Color = seq
 				accentGradient.Color = seq
 				shadow.ImageColor3 = color1
+			else
+				
+				local c = settings.Color
+				local h, s, v = Color3.toHSV(c)
+				local color2 = Color3.fromHSV(h, s, math.clamp(v - 0.2, 0, 1))
+				
+				local seq = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, c),
+					ColorSequenceKeypoint.new(1, color2)
+				})
+				
+				strokeGradient.Color = seq
+				accentGradient.Color = seq
+				shadow.ImageColor3 = c
 			end
 
 			
-			if self.watermark.Visible then
-				local targetWidth = 0
+			local targetWidth = 0
 
-				if isCollapsed then
-					
-					wmText.Text = string.format("<b>%s</b>", title)
-					local textBounds = textService:GetTextSize(title, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-					targetWidth = textBounds.X + 20
-				else
-					
-					local ping = 0
-					pcall(function()
-						
-						ping = math.round(localPlayer:GetNetworkPing() * 1000)
-					end)
-					if ping == 0 then 
-						pcall(function()
-							ping = math.round(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-						end)
-					end
-
-					
-					local timeStr = os.date("%H:%M:%S")
-					local playerName = localPlayer.Name
-					
-					
-					local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", title, playerName, currentFPS, ping, timeStr)
-					wmText.Text = finalText
-
-				
-					local stripText = string.format("%s | %s | %d FPS | %dms | %s", title, playerName, currentFPS, ping, timeStr)
-					local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-					targetWidth = textBounds.X + 26
+			if isCollapsed then
+				wmText.Text = string.format("<b>%s</b>", settings.Title)
+				local textBounds = textService:GetTextSize(settings.Title, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+				targetWidth = textBounds.X + 20
+			else
+				local ping = 0
+				pcall(function() ping = math.round(localPlayer:GetNetworkPing() * 1000) end)
+				if ping == 0 then
+					pcall(function() ping = math.round(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
 				end
 
+				local timeStr = os.date("%H:%M:%S")
+				local playerName = localPlayer.Name
 				
-				if targetWidth ~= lastTargetWidth then
-					lastTargetWidth = targetWidth
-					tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-						Size = UDim2.new(0, targetWidth, 0, 30)
-					}):Play()
-				end
+				local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", settings.Title, playerName, currentFPS, ping, timeStr)
+				wmText.Text = finalText
+
+				local stripText = string.format("%s | %s | %d FPS | %dms | %s", settings.Title, playerName, currentFPS, ping, timeStr)
+				local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+				targetWidth = textBounds.X + 26
+			end
+
+			
+			if targetWidth ~= lastTargetWidth then
+				lastTargetWidth = targetWidth
+				tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.new(0, targetWidth, 0, 30)
+				}):Play()
 			end
 		end)
 	end
 	
-	self.watermark.Visible = visible
+	self.watermark.Visible = self.wmSettings.Visible
 end
 
 function library:Init()
