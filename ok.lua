@@ -2141,6 +2141,179 @@ function library:CreateWindow(title)
 end
 
 local UIToggle
+
+function library:SetWatermark(options)
+	options = typeof(options) == "table" and options or {}
+	local title = tostring(options.Title or "Skibidi Hub")
+	local visible = options.Visible ~= false
+
+	if not self.base then
+		self.base = self:Create("ScreenGui", {
+			Name = "skibidi",
+			Parent = game:GetService("CoreGui"),
+			ResetOnSpawn = true
+		})
+	end
+
+	if not self.watermark then
+	
+		self.watermark = self:Create("Frame", {
+			Name = "Watermark",
+			Position = UDim2.new(0, 15, 0, 15),
+			Size = UDim2.new(0, 0, 0, 30),
+			BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+			BackgroundTransparency = 0.3,
+			BorderSizePixel = 0,
+			ClipsDescendants = false,
+			Parent = self.base,
+			Active = true
+		})
+
+		
+		self:Create("UICorner", {
+			CornerRadius = UDim.new(0, 6),
+			Parent = self.watermark
+		})
+
+		
+		local stroke = self:Create("UIStroke", {
+			Color = Color3.fromRGB(255, 255, 255),
+			Thickness = 1.2,
+			Transparency = 0.2,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Parent = self.watermark
+		})
+
+		
+		local strokeGradient = self:Create("UIGradient", {
+			Rotation = 45,
+			Parent = stroke
+		})
+
+		
+		local shadow = self:Create("ImageLabel", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, 30, 1, 30),
+			BackgroundTransparency = 1,
+			Image = "rbxassetid://6015897843",
+			ImageColor3 = Color3.fromRGB(0, 0, 0),
+			ImageTransparency = 0.5,
+			SliceCenter = Rect.new(49, 49, 450, 450),
+			ScaleType = Enum.ScaleType.Slice,
+			ZIndex = -1,
+			Parent = self.watermark
+		})
+
+		
+		local accentLine = self:Create("Frame", {
+			Size = UDim2.new(1, 0, 0, 2),
+			Position = UDim2.new(0, 0, 0, 0),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BorderSizePixel = 0,
+			Parent = self.watermark
+		})
+		self:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
+		
+		local accentGradient = self:Create("UIGradient", {
+			Parent = accentLine
+		})
+
+		local wmText = self:Create("TextLabel", {
+			Size = UDim2.new(1, -20, 1, 0),
+			Position = UDim2.new(0, 10, 0, 0),
+			BackgroundTransparency = 1,
+			Text = title,
+			TextSize = 13,
+			Font = Enum.Font.GothamSemibold,
+			TextColor3 = Color3.fromRGB(240, 240, 240),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			RichText = true,
+			Parent = self.watermark
+		})
+
+		
+		local wmDragging, wmDragInput, wmDragStart, wmStartPos
+		self.watermark.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				wmDragging = true
+				wmDragStart = input.Position
+				wmStartPos = self.watermark.Position
+			end
+		end)
+		self.watermark.InputChanged:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+				wmDragInput = input
+			end
+		end)
+		inputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				wmDragging = false
+			end
+		end)
+		runService.Heartbeat:Connect(function()
+			if wmDragging and wmDragInput then
+				local delta = wmDragInput.Position - wmDragStart
+				tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Position = UDim2.new(wmStartPos.X.Scale, wmStartPos.X.Offset + delta.X, wmStartPos.Y.Scale, wmStartPos.Y.Offset + delta.Y)
+				}):Play()
+			end
+			
+			
+			if chromaColor then
+				local h, s, v = Color3.toHSV(chromaColor)
+				local color1 = Color3.fromHSV(h, s, v)
+				local color2 = Color3.fromHSV((h + 0.1) % 1, s, v)
+				
+				local seq = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, color1),
+					ColorSequenceKeypoint.new(1, color2)
+				})
+				
+				strokeGradient.Color = seq
+				accentGradient.Color = seq
+				shadow.ImageColor3 = color1 
+			end
+		end)
+
+		
+		local fps = 0
+		runService.RenderStepped:Connect(function(dt)
+			fps = math.floor(1 / dt)
+		end)
+
+		task.spawn(function()
+			while task.wait(0.5) do
+				if self.watermark.Visible then
+					local ping = "0"
+					pcall(function()
+						
+						ping = string.split(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString(), " ")[1]
+					end)
+					
+					local timeStr = os.date("%H:%M:%S")
+					local player = game:GetService("Players").LocalPlayer.Name
+					
+					
+					local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%sms</font> <font color='#666666'>|</font> %s", title, player, fps, ping, timeStr)
+					
+					wmText.Text = finalText
+
+					
+					local stripText = string.format("%s | %s | %d FPS | %sms | %s", title, player, fps, ping, timeStr)
+					local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
+					
+					tweenService:Create(self.watermark, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+						Size = UDim2.new(0, textBounds.X + 26, 0, 30)
+					}):Play()
+				end
+			end
+		end)
+	end
+	
+	self.watermark.Visible = visible
+end
+
 function library:Init()
 	self.base = self.base or self:Create("ScreenGui")
 	if syn and syn.protect_gui then
