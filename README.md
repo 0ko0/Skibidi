@@ -17,6 +17,13 @@ local folder = tab:Addtab("tab")
 ```
 
 
+### Adding Divider
+```lua
+tab:AddDivider() -- There are only horizontal lines
+
+tab:AddDivider("test") -- There are horizontal lines and text
+```
+
 
 ### Adding Button
 ```lua
