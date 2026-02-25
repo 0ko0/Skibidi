@@ -170,3 +170,12 @@ library:Close()
 ```lua
 library:Init()
 ```
+
+### adding watermark
+```lua
+library:Watermark({
+    Title = "test", 
+    Rainbow = false, -- You can delete this line and replace it with a color you like (for example: Color = Color3.fromRGB(255, 50, 50),)
+    Visible = true 
+})
+```
