@@ -2142,7 +2142,7 @@ end
 
 local UIToggle
 
-function library:SetWatermark(options)
+function library:Watermark(options)
 	options = typeof(options) == "table" and options or {}
 	
 	self.wmSettings = self.wmSettings or {
