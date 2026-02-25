@@ -1037,17 +1037,28 @@ local function createList(option, parent, holder)
 				local targetHeight = updateDropdownSize()
 				local viewportY = workspace.CurrentCamera.ViewportSize.Y
 				
-				local isDownwards = (absPos.Y + 52 + targetHeight) < viewportY
-				local targetY = isDownwards and (absPos.Y + 48) or (absPos.Y - targetHeight + 5)
 				
-				option.mainHolder.Position = UDim2.new(0, absPos.X + 6, 0, isDownwards and (absPos.Y + 30) or (absPos.Y - 10))
+				local targetX = absPos.X + main.AbsoluteSize.X + 10
+				
+				
+				local targetY = absPos.Y
+				
+				if targetY + targetHeight > viewportY then
+					targetY = math.max(10, viewportY - targetHeight - 10)
+				end
+				
+				
+				option.mainHolder.Position = UDim2.new(0, targetX, 0, targetY)
 				option.mainHolder.Size = UDim2.new(0, round.AbsoluteSize.X, 0, 0)
 				
-				tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180, ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Rotation = 0, 
+    Position = UDim2.new(1, -4, 0.5, 0),
+    ImageColor3 = Color3.fromRGB(255, 255, 255)
+}):Play()
 				tweenService:Create(round, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
 				tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, round.AbsoluteSize.X, 0, targetHeight),
-					Position = UDim2.new(0, absPos.X + 6, 0, targetY)
+					Size = UDim2.new(0, round.AbsoluteSize.X, 0, targetHeight)
 				}):Play()
 			end
 		end
@@ -1222,7 +1233,11 @@ local function createList(option, parent, holder)
 		library.activePopup = nil
 		self.open = false
 		
-		tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90, ImageColor3 = Color3.fromRGB(160, 160, 160)}):Play()
+tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Rotation = 90, 
+    Position = UDim2.new(1, -10, 0.5, 0),
+    ImageColor3 = Color3.fromRGB(160, 160, 160)
+}):Play()
 		tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = inContact and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)}):Play()
 		
 		local closeTween = tweenService:Create(self.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, round.AbsoluteSize.X, 0, 0)})
