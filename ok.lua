@@ -405,12 +405,12 @@ function createButton(option, parent)
 	local text = tostring(option.text or "Button")
 	local iconId = option.icon 
 	local isLocked = option.locked or false 
-	local accentColor = option.color or Color3.fromRGB(85, 170, 255) 
+	local accentColor = option.color or Color3.fromRGB(255, 255, 255) 
 
 	
 	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 42), 
+		Size = UDim2.new(1, 0, 0, 36), 
 		BackgroundTransparency = 1,
 		Parent = parent.content
 	})
