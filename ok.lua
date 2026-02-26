@@ -2805,19 +2805,6 @@ function library:Notify(options)
 		Parent = progressFill
 	})
 
-	
-	local glowDot = self:Create("ImageLabel", {
-		Size = UDim2.new(0, 12, 0, 12),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(1, 0, 0.5, 0),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://6015897843",
-		ImageColor3 = accentColor,
-		ZIndex = 5,
-		Parent = progressFill
-	})
-
-
 	local function closeNotif() end 
 
 	if #buttons > 0 then
