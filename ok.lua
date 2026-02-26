@@ -2623,37 +2623,42 @@ inputService.InputChanged:connect(function(input)
 	end
 end)
 
+local MAX_NOTIFICATIONS = 6
+local notificationCount = 0
+
 function library:Notify(options)
 	options = typeof(options) == "table" and options or {}
 	local titleText = tostring(options.Title or "Notification")
-	local descText = tostring(options.Text or "")
+	local descText = tostring(options.Content or options.Text or "")
 	local duration = tonumber(options.Duration) or 5
 	local notifType = string.lower(tostring(options.Type or "info"))
+	local customIcon = options.Icon
+	local customColor = options.Color
+	local buttons = options.Buttons or {}
 
-
-	local typeColors = {
-		info = Color3.fromRGB(255, 255, 255),
-		success = Color3.fromRGB(60, 255, 110),
-		warning = Color3.fromRGB(255, 200, 60),
-		error = Color3.fromRGB(255, 80, 80)
+	
+	local typeConfig = {
+		info = {color = Color3.fromRGB(255, 255, 255), icon = "rbxassetid://7733658504", sound = "rbxassetid://4590662766"},
+		success = {color = Color3.fromRGB(80, 255, 140), icon = "rbxassetid://7733677441", sound = "rbxassetid://4590688228"},
+		warning = {color = Color3.fromRGB(255, 200, 80), icon = "rbxassetid://7733681534", sound = "rbxassetid://4590657391"},
+		error = {color = Color3.fromRGB(255, 80, 80), icon = "rbxassetid://7733658602", sound = "rbxassetid://4590662766"},
+		custom = {color = customColor or Color3.fromRGB(255, 255, 255), icon = customIcon or "rbxassetid://7733658504", sound = "rbxassetid://4590662766"}
 	}
-	local accentColor = typeColors[notifType] or typeColors.info
+	
+	if not typeConfig[notifType] then notifType = "info" end
+	local config = typeConfig[notifType]
+	local accentColor = config.color
 
 	
 	if not self.base then
-		self.base = self:Create("ScreenGui", {
-			Name = "skibidi_notify",
-			Parent = game:GetService("CoreGui"),
-			ResetOnSpawn = true
-		})
+		self.base = self:Create("ScreenGui", { Name = "skibidi_notify", Parent = game:GetService("CoreGui"), ResetOnSpawn = true })
 	end
 
-	
 	if not self.notifContainer then
 		self.notifContainer = self:Create("Frame", {
 			Name = "NotificationContainer",
-			Size = UDim2.new(0, 300, 1, -40),
-			Position = UDim2.new(1, -320, 0, 20),
+			Size = UDim2.new(0, 320, 1, -40),
+			Position = UDim2.new(1, -340, 0, 20),
 			BackgroundTransparency = 1,
 			Parent = self.base
 		})
@@ -2668,63 +2673,76 @@ function library:Notify(options)
 	end
 
 	
-	local titleSize = 16
-	local descSize = 14
-	local descBounds = textService:GetTextSize(
-		descText, 
-		descSize, 
-		Enum.Font.Gotham, 
-		Vector2.new(250, 9e9) 
-	)
+	local titleSize = 15
+	local descSize = 13
+	local descBounds = textService:GetTextSize(descText, descSize, Enum.Font.Gotham, Vector2.new(250, 9e9))
 	
-	local targetHeight = descText == "" and 45 or (45 + descBounds.Y + 5)
+	local targetHeight = 36 
+	if descText ~= "" then targetHeight = targetHeight + descBounds.Y + 6 end
+	if #buttons > 0 then targetHeight = targetHeight + 32 end 
 
 	
 	local holder = self:Create("Frame", {
-		Size = UDim2.new(1, 0, 0, targetHeight),
+		Size = UDim2.new(1, 0, 0, 0), 
 		BackgroundTransparency = 1,
-		Parent = self.notifContainer
+		Parent = self.notifContainer,
+		LayoutOrder = notificationCount
 	})
+	notificationCount = notificationCount + 1
 
 	
 	local mainCard = self:Create("Frame", {
 		Size = UDim2.new(1, 0, 1, 0),
 		Position = UDim2.new(1, 400, 0, 0), 
-		BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+		BackgroundColor3 = Color3.fromRGB(15, 15, 18),
+		BackgroundTransparency = 0.1,
+		ClipsDescendants = true,
 		Parent = holder
 	})
+	self:Create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = mainCard })
 
-	self:Create("UICorner", {
-		CornerRadius = UDim.new(0, 6),
-		Parent = mainCard
-	})
-
+	
 	self:Create("UIStroke", {
-		Color = Color3.fromRGB(50, 50, 50),
-		Thickness = 1,
+		Color = accentColor,
+		Thickness = 1.2,
+		Transparency = 0.5,
 		Parent = mainCard
 	})
 
 	
-	local accentLine = self:Create("Frame", {
-		Size = UDim2.new(0, 3, 1, -12),
-		Position = UDim2.new(0, 6, 0.5, 0),
-		AnchorPoint = Vector2.new(0, 0.5),
-		BackgroundColor3 = accentColor,
-		BorderSizePixel = 0,
+	local shadowGlow = self:Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, 40, 1, 40),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://6015897843",
+		ImageColor3 = accentColor,
+		ImageTransparency = 0.6,
+		SliceCenter = Rect.new(49, 49, 450, 450),
+		ScaleType = Enum.ScaleType.Slice,
+		ZIndex = -1,
 		Parent = mainCard
 	})
-	self:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
 
 	
-	local titleLbl = self:Create("TextLabel", {
-		Size = UDim2.new(1, -25, 0, 20),
-		Position = UDim2.new(0, 18, 0, 8),
+	local iconLabel = self:Create("ImageLabel", {
+		Size = UDim2.new(0, 20, 0, 20),
+		Position = UDim2.new(0, 12, 0, 12),
+		BackgroundTransparency = 1,
+		Image = config.icon,
+		ImageColor3 = accentColor,
+		Parent = mainCard
+	})
+
+	
+	self:Create("TextLabel", {
+		Size = UDim2.new(1, -45, 0, 20),
+		Position = UDim2.new(0, 40, 0, 12),
 		BackgroundTransparency = 1,
 		Text = titleText,
 		TextSize = titleSize,
 		Font = Enum.Font.GothamBold,
-		TextColor3 = Color3.fromRGB(240, 240, 240),
+		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = mainCard
 	})
@@ -2732,13 +2750,13 @@ function library:Notify(options)
 	
 	if descText ~= "" then
 		self:Create("TextLabel", {
-			Size = UDim2.new(1, -25, 0, descBounds.Y),
-			Position = UDim2.new(0, 18, 0, 30),
+			Size = UDim2.new(1, -52, 0, descBounds.Y),
+			Position = UDim2.new(0, 40, 0, 34),
 			BackgroundTransparency = 1,
 			Text = descText,
 			TextSize = descSize,
 			Font = Enum.Font.Gotham,
-			TextColor3 = Color3.fromRGB(180, 180, 180),
+			TextColor3 = Color3.fromRGB(200, 200, 200),
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Top,
 			TextWrapped = true,
@@ -2746,79 +2764,152 @@ function library:Notify(options)
 		})
 	end
 
+
+	if #buttons > 0 then
+		local btnContainer = self:Create("Frame", {
+			Size = UDim2.new(1, -52, 0, 26),
+			Position = UDim2.new(0, 40, 1, -34),
+			BackgroundTransparency = 1,
+			Parent = mainCard
+		})
+		
+		local btnLayout = self:Create("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			HorizontalAlignment = Enum.HorizontalAlignment.Left,
+			Padding = UDim.new(0, 8),
+			Parent = btnContainer
+		})
+
+		for i, btnData in ipairs(buttons) do
+			local btnText = tostring(btnData.Title or "Button")
+			local btnBounds = textService:GetTextSize(btnText, 12, Enum.Font.GothamBold, Vector2.new(999, 26))
+			
+			local btn = self:Create("TextButton", {
+				Size = UDim2.new(0, btnBounds.X + 20, 1, 0),
+				BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+				Text = btnText,
+				TextSize = 12,
+				Font = Enum.Font.GothamBold,
+				TextColor3 = Color3.fromRGB(255, 255, 255),
+				AutoButtonColor = false,
+				Parent = btnContainer
+			})
+			self:Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = btn })
+			self:Create("UIStroke", { Color = Color3.fromRGB(60, 60, 70), Thickness = 1, Parent = btn })
+
 	
+			btn.MouseEnter:Connect(function()
+				tweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = accentColor, TextColor3 = Color3.fromRGB(15, 15, 15)}):Play()
+			end)
+			btn.MouseLeave:Connect(function()
+				tweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 35), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+			end)
+
+			
+			btn.MouseButton1Click:Connect(function()
+				if btnData.Callback then pcall(btnData.Callback) end
+				if not btnData.KeepOpen then closeNotif() end
+			end)
+		end
+	end
+
+
 	local progressBg = self:Create("Frame", {
-		Size = UDim2.new(1, 0, 0, 2),
-		Position = UDim2.new(0, 0, 1, -2),
-		BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+		Size = UDim2.new(1, 0, 0, 3),
+		Position = UDim2.new(0, 0, 1, -3),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 35),
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
 		Parent = mainCard
 	})
-	self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = progressBg })
-
 	local progressFill = self:Create("Frame", {
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundColor3 = accentColor,
 		BorderSizePixel = 0,
 		Parent = progressBg
 	})
+	self:Create("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, accentColor),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+		}),
+		Parent = progressFill
+	})
 
 	
 	local isClosing = false
-	local function closeNotif()
+	function closeNotif()
 		if isClosing then return end
 		isClosing = true
 
-		
 		tweenService:Create(mainCard, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
 			Position = UDim2.new(1, 400, 0, 0)
 		}):Play()
 
-		task.wait(0.4)
-
-		
-		local shrinkTween = tweenService:Create(holder, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Size = UDim2.new(1, 0, 0, 0)
-		})
-		shrinkTween:Play()
-		shrinkTween.Completed:Wait()
-
+		task.wait(0.3)
+		local shrink = tweenService:Create(holder, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, 0) })
+		shrink:Play()
+		shrink.Completed:Wait()
 		holder:Destroy()
 	end
 
 	
-	local clickBtn = self:Create("TextButton", {
+	local dismissBtn = self:Create("TextButton", {
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		Text = "",
-		ZIndex = 10,
+		ZIndex = 5,
 		Parent = mainCard
 	})
+	dismissBtn.MouseButton1Click:Connect(closeNotif)
+
 	
-	clickBtn.MouseButton1Click:Connect(closeNotif)
+	local isHovering = false
+	local timeLeft = duration
+	mainCard.MouseEnter:Connect(function() isHovering = true end)
+	mainCard.MouseLeave:Connect(function() isHovering = false end)
 
 	
 	pcall(function()
 		local sound = Instance.new("Sound")
-		sound.SoundId = "rbxassetid://"
-		sound.Volume = 0.5
+		sound.SoundId = config.sound
+		sound.Volume = 0.6
 		sound.Parent = game.Workspace
 		sound:Play()
 		game.Debris:AddItem(sound, 2)
 	end)
 
-	tweenService:Create(mainCard, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+	tweenService:Create(holder, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		Size = UDim2.new(1, 0, 0, targetHeight)
+	}):Play()
+	
+	task.wait(0.1)
+
+	tweenService:Create(mainCard, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.1), {
 		Position = UDim2.new(0, 0, 0, 0)
 	}):Play()
 
-	local progressTween = tweenService:Create(progressFill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-		Size = UDim2.new(0, 0, 1, 0)
-	})
-	progressTween:Play()
-
-	task.delay(duration, function()
-		closeNotif()
+	
+	task.spawn(function()
+		local runService = game:GetService("RunService")
+		local connection
+		connection = runService.RenderStepped:Connect(function(dt)
+			if isClosing then 
+				connection:Disconnect() 
+				return 
+			end
+			
+			if not isHovering then
+				timeLeft = timeLeft - dt
+				local percent = math.clamp(timeLeft / duration, 0, 1)
+		
+				progressFill.Size = progressFill.Size:Lerp(UDim2.new(percent, 0, 1, 0), 0.3)
+				
+				if timeLeft <= 0 then
+					connection:Disconnect()
+					closeNotif()
+				end
+			end
+		end)
 	end)
 end
 
