@@ -400,138 +400,274 @@ function createToggle(option, parent)
 end
 
 function createButton(option, parent)
+	
+	option = typeof(option) == "table" and option or {}
+	local text = tostring(option.text or "Button")
+	local iconId = option.icon 
+	local isLocked = option.locked or false 
+	local accentColor = option.color or Color3.fromRGB(85, 170, 255) 
+
+	
 	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 36),
+		Size = UDim2.new(1, 0, 0, 42), 
 		BackgroundTransparency = 1,
 		Parent = parent.content
 	})
+
 	
-	local buttonFrame = library:Create("ImageButton", {
+	local shadow = library:Create("ImageLabel", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, -12, 1, -10),
+		Position = UDim2.new(0.5, 0, 0.5, 2),
+		Size = UDim2.new(1, 8, 1, 10),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(40, 40, 40),
+		Image = "rbxassetid://4731308832",
+		ImageColor3 = Color3.fromRGB(0, 0, 0),
+		ImageTransparency = 0.6,
 		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
-		ClipsDescendants = true,
-		AutoButtonColor = false,
+		SliceCenter = Rect.new(21, 21, 278, 278),
 		Parent = main
 	})
+
 	
-	local btnText = library:Create("TextLabel", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Text = option.text,
-		TextSize = 15,
-		Font = Enum.Font.GothamSemibold, 
-		TextColor3 = Color3.fromRGB(200, 200, 200),
+	local buttonFrame = library:Create("TextButton", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, -12, 1, -8),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+		AutoButtonColor = false,
+		Text = "",
+		ClipsDescendants = true,
+		Parent = main
+	})
+
+	
+	library:Create("UICorner", {
+		CornerRadius = UDim.new(0, 6),
 		Parent = buttonFrame
 	})
+
 	
+	local stroke = library:Create("UIStroke", {
+		Color = Color3.fromRGB(60, 60, 70),
+		Thickness = 1.2,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Transparency = 0,
+		Parent = buttonFrame
+	})
+
+	
+	local uigradient = library:Create("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 180, 180))
+		}),
+		Rotation = 90,
+		Parent = buttonFrame
+	})
+
+	
+	local contentFrame = library:Create("Frame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Parent = buttonFrame
+	})
+
+	library:Create("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 6),
+		Parent = contentFrame
+	})
+
+	
+	local iconImg
+	if iconId then
+		iconImg = library:Create("ImageLabel", {
+			Size = UDim2.new(0, 18, 0, 18),
+			BackgroundTransparency = 1,
+			Image = iconId,
+			ImageColor3 = isLocked and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(220, 220, 220),
+			Parent = contentFrame
+		})
+	end
+
+	
+	local btnText = library:Create("TextLabel", {
+		Size = UDim2.new(0, 0, 1, 0),
+		AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 1,
+		Text = text,
+		TextSize = 14,
+		Font = Enum.Font.GothamSemibold, 
+		TextColor3 = isLocked and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(220, 220, 220),
+		Parent = contentFrame
+	})
+
+	
+	if isLocked then
+		buttonFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 22)
+		stroke.Color = Color3.fromRGB(40, 40, 45)
+		uigradient.Color = ColorSequence.new(Color3.fromRGB(150, 150, 150))
+	end
+
 	
 	local function createRipple(input)
 		local ripple = library:Create("ImageLabel", {
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://3570695787",
-			ImageColor3 = Color3.fromRGB(255, 255, 255),
-			ImageTransparency = 0.6,
-			ScaleType = Enum.ScaleType.Slice,
-			SliceCenter = Rect.new(100, 100, 100, 100),
-			SliceScale = 1,
+			Image = "rbxassetid://2708891598", 
+			ImageColor3 = accentColor,
+			ImageTransparency = 0.8,
 			ZIndex = 5,
 			Parent = buttonFrame
 		})
 		
-		
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(1, 0)
-		corner.Parent = ripple
-		
 		local absolutePos = buttonFrame.AbsolutePosition
 		local mousePos = input.Position
 		
-		
-		local localX = (mousePos.X > 0) and (mousePos.X - absolutePos.X) or (buttonFrame.AbsoluteSize.X / 2)
-		local localY = (mousePos.Y > 0) and (mousePos.Y - absolutePos.Y) or (buttonFrame.AbsoluteSize.Y / 2)
+		local localX = mousePos.X - absolutePos.X
+		local localY = mousePos.Y - absolutePos.Y
 		
 		ripple.Position = UDim2.new(0, localX, 0, localY)
 		ripple.Size = UDim2.new(0, 0, 0, 0)
 		ripple.AnchorPoint = Vector2.new(0.5, 0.5)
 		
+		local maxSize = math.max(buttonFrame.AbsoluteSize.X, buttonFrame.AbsoluteSize.Y) * 2.5
 		
-		local maxSize = math.max(buttonFrame.AbsoluteSize.X, buttonFrame.AbsoluteSize.Y) * 1.5
-		
-		local tween = tweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+		local tween = tweenService:Create(ripple, TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
 			Size = UDim2.new(0, maxSize, 0, maxSize),
 			ImageTransparency = 1
 		})
 		tween:Play()
 		
-		
-		coroutine.wrap(function()
-			tween.Completed:Wait()
+		task.delay(0.6, function()
 			ripple:Destroy()
-		end)()
+		end)
 	end
 
+	
 	local inContact = false
 	local isClicking = false
 
 	buttonFrame.InputBegan:connect(function(input)
+		if isLocked then return end
+
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = true
 			if not isClicking then
-				tweenService:Create(buttonFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(55, 55, 55)}):Play()
-				tweenService:Create(btnText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+				
+				tweenService:Create(buttonFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+					Size = UDim2.new(1, -10, 1, -6) 
+				}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					Color = accentColor 
+				}):Play()
+				tweenService:Create(btnText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					TextColor3 = Color3.fromRGB(255, 255, 255)
+				}):Play()
+				if iconImg then
+					tweenService:Create(iconImg, TweenInfo.new(0.2), { ImageColor3 = Color3.fromRGB(255, 255, 255) }):Play()
+				end
 			end
 		elseif input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 			isClicking = true
 			library.flags[option.flag] = true
 			
-			
 			createRipple(input)
 			
 			
-			tweenService:Create(buttonFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				Size = UDim2.new(1, -16, 1, -14),
-				ImageColor3 = Color3.fromRGB(70, 70, 70)
+			tweenService:Create(buttonFrame, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Size = UDim2.new(1, -16, 1, -12), 
+				BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 			}):Play()
-			tweenService:Create(btnText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				TextSize = 14
+			tweenService:Create(stroke, TweenInfo.new(0.15), {
+				Color = Color3.fromRGB(60, 60, 70)
 			}):Play()
-			
-			option.callback()
 		end
 	end)
 
 	buttonFrame.InputEnded:connect(function(input)
+		if isLocked then return end
+
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = false
 			if not isClicking then
-				tweenService:Create(buttonFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-				tweenService:Create(btnText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+				
+				tweenService:Create(buttonFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+					Size = UDim2.new(1, -12, 1, -8)
+				}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					Color = Color3.fromRGB(60, 60, 70)
+				}):Play()
+				tweenService:Create(btnText, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					TextColor3 = Color3.fromRGB(220, 220, 220)
+				}):Play()
+				if iconImg then
+					tweenService:Create(iconImg, TweenInfo.new(0.3), { ImageColor3 = Color3.fromRGB(220, 220, 220) }):Play()
+				end
 			end
 		elseif input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 			isClicking = false
 			
-			local endColor = inContact and Color3.fromRGB(55, 55, 55) or Color3.fromRGB(40, 40, 40)
-			local endTextColor = inContact and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+			local endScale = inContact and UDim2.new(1, -10, 1, -6) or UDim2.new(1, -12, 1, -8)
+			local endBg = inContact and Color3.fromRGB(40, 40, 45) or Color3.fromRGB(30, 30, 35)
+			local endStroke = inContact and accentColor or Color3.fromRGB(60, 60, 70)
 			
 			
-			tweenService:Create(buttonFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-				Size = UDim2.new(1, -12, 1, -10),
-				ImageColor3 = endColor
+			tweenService:Create(buttonFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				Size = endScale,
+				BackgroundColor3 = endBg
 			}):Play()
-			tweenService:Create(btnText, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-				TextSize = 15,
-				TextColor3 = endTextColor
+			tweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+				Color = endStroke
 			}):Play()
+			
+			
+			task.spawn(function()
+				pcall(option.callback)
+			end)
 		end
 	end)
+
+	
+	function option:SetText(newText)
+		btnText.Text = tostring(newText)
+	end
+
+	function option:SetColor(newColor)
+		accentColor = newColor
+	end
+
+	function option:SetLocked(state)
+		isLocked = state
+		local targetBg = isLocked and Color3.fromRGB(20, 20, 22) or Color3.fromRGB(30, 30, 35)
+		local targetStroke = isLocked and Color3.fromRGB(40, 40, 45) or Color3.fromRGB(60, 60, 70)
+		local targetText = isLocked and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(220, 220, 220)
+
+		tweenService:Create(buttonFrame, TweenInfo.new(0.3), {BackgroundColor3 = targetBg}):Play()
+		tweenService:Create(stroke, TweenInfo.new(0.3), {Color = targetStroke}):Play()
+		tweenService:Create(btnText, TweenInfo.new(0.3), {TextColor3 = targetText}):Play()
+		if iconImg then
+			tweenService:Create(iconImg, TweenInfo.new(0.3), {ImageColor3 = targetText}):Play()
+		end
+	end
+
+	function option:Fire()
+		if not isLocked then
+			task.spawn(function() pcall(option.callback) end)
+		end
+	end
+
+	setmetatable(option, {__newindex = function(t, i, v)
+		if i == "Text" or i == "text" then
+			btnText.Text = tostring(v)
+		end
+	end})
+
+	return option
 end
 
 local function createBind(option, parent)
@@ -2148,7 +2284,7 @@ function library:Watermark(options)
 	self.wmSettings = self.wmSettings or {
 		Title = "empty",
 		Rainbow = true,
-		Color = Color3.fromRGB(130, 170, 255), 
+		Color = Color3.fromRGB(255, 255, 255), 
 		Visible = true
 	}
 
