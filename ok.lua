@@ -2148,7 +2148,7 @@ function library:Watermark(options)
 	self.wmSettings = self.wmSettings or {
 		Title = "empty",
 		Rainbow = true,
-		Color = Color3.fromRGB(255, 255, 255), 
+		Color = Color3.fromRGB(130, 170, 255), 
 		Visible = true
 	}
 
@@ -2168,94 +2168,101 @@ function library:Watermark(options)
 			IgnoreGuiInset = true
 		})
 	end
-	self.base.IgnoreGuiInset = true
 
 	if not self.watermark then
-		self.watermark = self:Create("Frame", {
-			Name = "Watermark",
-			Position = UDim2.new(0, 15, 0, 15),
-			Size = UDim2.new(0, 0, 0, 30),
-			BackgroundColor3 = Color3.fromRGB(15, 15, 15),
-			BackgroundTransparency = 0.3,
-			BorderSizePixel = 0,
-			ClipsDescendants = true,
+		self.wmContainer = self:Create("Frame", {
+			Name = "WatermarkContainer",
+			Position = UDim2.new(0, 20, 0, 20),
+			Size = UDim2.new(0, 0, 0, 34),
+			BackgroundTransparency = 1,
 			Parent = self.base,
 			Active = true
+		})
+
+		local auraGlow = self:Create("ImageLabel", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, 40, 1, 40),
+			BackgroundTransparency = 1,
+			Image = "rbxassetid://6015897843",
+			ImageColor3 = self.wmSettings.Color,
+			ImageTransparency = 0.4,
+			SliceCenter = Rect.new(49, 49, 450, 450),
+			ScaleType = Enum.ScaleType.Slice,
+			ZIndex = 0,
+			Parent = self.wmContainer
+		})
+
+		self.watermark = self:Create("Frame", {
+			Name = "MainAcrylic",
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(15, 15, 18),
+			BackgroundTransparency = 0.25,
+			BorderSizePixel = 0,
+			ClipsDescendants = true,
+			ZIndex = 2,
+			Parent = self.wmContainer
 		})
 
 		self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.watermark })
 
 		local stroke = self:Create("UIStroke", {
 			Color = Color3.fromRGB(255, 255, 255),
-			Thickness = 1.2,
-			Transparency = 0.2,
+			Thickness = 1.5,
+			Transparency = 0.1,
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Parent = self.watermark
 		})
-		local strokeGradient = self:Create("UIGradient", { Rotation = 45, Parent = stroke })
+		local strokeGradient = self:Create("UIGradient", { Rotation = 0, Parent = stroke })
 
-		local shadow = self:Create("ImageLabel", {
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0.5, 0, 0.5, 0),
-			Size = UDim2.new(1, 30, 1, 30),
-			BackgroundTransparency = 1,
-			Image = "rbxassetid://6015897843",
-			ImageColor3 = Color3.fromRGB(0, 0, 0),
-			ImageTransparency = 0.5,
-			SliceCenter = Rect.new(49, 49, 450, 450),
-			ScaleType = Enum.ScaleType.Slice,
-			ZIndex = -1,
-			Parent = self.watermark
-		})
-
-		local accentLine = self:Create("Frame", {
-			Size = UDim2.new(1, 0, 0, 2),
+		local topAccent = self:Create("Frame", {
+			Size = UDim2.new(1, 0, 0, 1),
 			Position = UDim2.new(0, 0, 0, 0),
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
+			ZIndex = 3,
 			Parent = self.watermark
 		})
-		self:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
-		local accentGradient = self:Create("UIGradient", { Parent = accentLine })
+		local accentGradient = self:Create("UIGradient", { Parent = topAccent })
 
 		local wmText = self:Create("TextLabel", {
-			Size = UDim2.new(1, -20, 1, 0),
-			Position = UDim2.new(0, 10, 0, 0),
+			Size = UDim2.new(1, -24, 1, 0),
+			Position = UDim2.new(0, 12, 0, 0),
 			BackgroundTransparency = 1,
 			Text = "",
 			TextSize = 13,
-			Font = Enum.Font.GothamSemibold,
-			TextColor3 = Color3.fromRGB(240, 240, 240),
+			Font = Enum.Font.GothamMedium,
+			TextColor3 = Color3.fromRGB(240, 240, 245),
 			TextXAlignment = Enum.TextXAlignment.Left,
 			RichText = true,
+			ZIndex = 3,
 			Parent = self.watermark
 		})
 
 		local isCollapsed = false
-		local forceUpdate = true 
 		local wmDragging, wmDragInput, wmDragStart, wmStartPos
 		local dragStartTime = 0
 
-		self.watermark.InputBegan:Connect(function(input)
+		self.wmContainer.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				wmDragging = true
 				wmDragInput = input
 				wmDragStart = input.Position
-				wmStartPos = self.watermark.Position
-				dragStartTime = tick()
+				wmStartPos = self.wmContainer.Position
+				dragStartTime = os.clock()
 			end
 		end)
 
 		inputService.InputChanged:Connect(function(input)
 			if input == wmDragInput and wmDragging then
 				local delta = input.Position - wmDragStart
-				if delta.Magnitude > 3 then 
+				if delta.Magnitude > 2 then 
 					local viewport = workspace.CurrentCamera.ViewportSize
-					local wmSize = self.watermark.AbsoluteSize
+					local wmSize = self.wmContainer.AbsoluteSize
 					local newX = math.clamp(wmStartPos.X.Offset + delta.X, 0, viewport.X - wmSize.X)
 					local newY = math.clamp(wmStartPos.Y.Offset + delta.Y, 0, viewport.Y - wmSize.Y)
 
-					tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					tweenService:Create(self.wmContainer, TweenInfo.new(0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
 						Position = UDim2.new(0, newX, 0, newY)
 					}):Play()
 				end
@@ -2266,129 +2273,144 @@ function library:Watermark(options)
 			if input == wmDragInput then
 				wmDragging = false
 				wmDragInput = nil
-				if tick() - dragStartTime < 0.3 then 
+				if os.clock() - dragStartTime < 0.25 then 
 					local delta = input.Position - wmDragStart
 					if delta.Magnitude < 5 then 
 						isCollapsed = not isCollapsed
-						forceUpdate = true 
+						tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+						}):Play()
+						task.wait(0.1)
+						tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+						}):Play()
 					end
 				end
 			end
 		end)
 
-		local lastTargetWidth = 0
-		local localPlayer = game:GetService("Players").LocalPlayer
-		local stats = game:GetService("Stats")
-
-		local lastStatsUpdate = 0
-		local frames = 0
-		local displayFPS = 0
-		local displayPing = 0
-		local displayTime = ""
-
 		
-		runService.RenderStepped:Connect(function()
-			if not self.watermark.Visible then return end
+		local currentFPS = 0
+		local frameHistory = {}
+		local maxFrames = 15 
+
+		runService.RenderStepped:Connect(function(deltaTime)
+			table.insert(frameHistory, deltaTime)
+			if #frameHistory > maxFrames then
+				table.remove(frameHistory, 1)
+			end
+			
+			local totalDt = 0
+			for _, dt in ipairs(frameHistory) do
+				totalDt = totalDt + dt
+			end
+			
+			
+			currentFPS = math.round(1 / (totalDt / #frameHistory))
+		end)
+
+		local lastTargetWidth = 0
+		local rotationValue = 0
+		local localPlayer = game:GetService("Players").LocalPlayer
+		local statsService = game:GetService("Stats")
+
+		runService.Heartbeat:Connect(function(dt)
+			if not self.wmContainer.Visible then return end
 			local settings = self.wmSettings
 
 			
+			rotationValue = (rotationValue + (dt * 60)) % 360
+			strokeGradient.Rotation = rotationValue
+
+			local mainColor = settings.Color
 			if settings.Rainbow then
-				local h = tick() % 5 / 5
-				local color1 = Color3.fromHSV(h, 1, 1)
-				local color2 = Color3.fromHSV((h + 0.1) % 1, 1, 1)
+				local h = tick() % 4 / 4
+				mainColor = Color3.fromHSV(h, 0.8, 1)
+				local color2 = Color3.fromHSV((h + 0.15) % 1, 0.8, 1)
 				
 				local seq = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, color1),
-					ColorSequenceKeypoint.new(1, color2)
+					ColorSequenceKeypoint.new(0, mainColor),
+					ColorSequenceKeypoint.new(0.5, color2),
+					ColorSequenceKeypoint.new(1, mainColor)
 				})
 				
 				strokeGradient.Color = seq
 				accentGradient.Color = seq
-				shadow.ImageColor3 = color1
 			else
-				local c = settings.Color
-				local h, s, v = Color3.toHSV(c)
-				local color2 = Color3.fromHSV(h, s, math.clamp(v - 0.2, 0, 1))
-				
+				local h, s, v = Color3.toHSV(mainColor)
+				local color2 = Color3.fromHSV(h, s, math.clamp(v - 0.3, 0.2, 1))
 				local seq = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, c),
-					ColorSequenceKeypoint.new(1, color2)
+					ColorSequenceKeypoint.new(0, mainColor),
+					ColorSequenceKeypoint.new(0.5, color2),
+					ColorSequenceKeypoint.new(1, mainColor)
 				})
-				
 				strokeGradient.Color = seq
 				accentGradient.Color = seq
-				shadow.ImageColor3 = c
+			end
+			
+			auraGlow.ImageColor3 = mainColor
+			auraGlow.ImageTransparency = 0.3 + math.sin(tick() * 3) * 0.1
+
+			local targetWidth = 0
+			local titleHex = "#" .. mainColor:ToHex()
+			local dotHex = "<font color='#555555'> • </font>"
+
+			if isCollapsed then
+				local firstChar = string.sub(settings.Title, 1, 1)
+				wmText.Text = string.format("<b><font color='%s'>%s</font></b>", titleHex, firstChar)
+				wmText.TextXAlignment = Enum.TextXAlignment.Center
+				targetWidth = 34
+			else
+				
+				local ping = 0
+				local networkPing = localPlayer:GetNetworkPing() * 1000
+				if networkPing > 0 then
+					ping = math.round(networkPing)
+				else
+					
+					pcall(function()
+						ping = math.round(statsService.Network.ServerStatsItem["Data Ping"]:GetValue())
+					end)
+				end
+
+				
+				local fpsColor = currentFPS >= 55 and "#55FF55" or (currentFPS >= 30 and "#FFFF55" or "#FF5555")
+				local pingColor = ping <= 80 and "#55FF55" or (ping <= 150 and "#FFFF55" or "#FF5555")
+
+				
+				local timeStr = os.date("%H:%M:%S")
+				local playerName = localPlayer.Name
+				
+				
+				local finalText = string.format(
+					"<b><font color='%s'>%s</font></b>%s%s%s<font color='%s'>%d FPS</font>%s<font color='%s'>%dms</font>%s%s", 
+					titleHex, settings.Title, 
+					dotHex, playerName, 
+					dotHex, fpsColor, currentFPS, 
+					dotHex, pingColor, ping, 
+					dotHex, timeStr
+				)
+				
+				wmText.Text = finalText
+				wmText.TextXAlignment = Enum.TextXAlignment.Left
+
+				
+				local stripText = string.format("%s   %s   %d FPS   %dms   %s", settings.Title, playerName, currentFPS, ping, timeStr)
+				local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamMedium, Vector2.new(9999, 34))
+				targetWidth = textBounds.X + 24 
 			end
 
 			
-			frames = frames + 1
-			local currentTime = os.clock()
-
-			
-			if currentTime - lastStatsUpdate >= 0.5 or forceUpdate then
-				
-			
-				if currentTime - lastStatsUpdate >= 0.5 then
-					displayFPS = math.round(frames / (currentTime - lastStatsUpdate))
-					frames = 0
-					lastStatsUpdate = currentTime
-
-					local ping = 0
-					pcall(function() ping = math.round(stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
-					if ping == 0 then
-						pcall(function() ping = math.round(localPlayer:GetNetworkPing() * 1000) end)
-					end
-					displayPing = ping
-				end
-
-				
-				displayTime = DateTime.now():FormatLocalTime("HH:mm:ss", "en-us")
-				local targetWidth = 0
-
-				if isCollapsed then
-					
-					local firstChar = string.sub(settings.Title, 1, 1)
-					wmText.Text = string.format("<b>%s</b>", firstChar)
-					
-					wmText.TextXAlignment = Enum.TextXAlignment.Center
-					wmText.Size = UDim2.new(1, 0, 1, 0)
-					wmText.Position = UDim2.new(0, 0, 0, 0)
-					
-					targetWidth = 30
-				else
-					
-					local playerName = localPlayer.Name
-					local finalText = string.format("<b>%s</b> <font color='#666666'>|</font> %s <font color='#666666'>|</font> <font color='#a3ffa3'>%d FPS</font> <font color='#666666'>|</font> <font color='#ffb266'>%dms</font> <font color='#666666'>|</font> %s", settings.Title, playerName, displayFPS, displayPing, displayTime)
-					
-					if wmText.Text ~= finalText then
-						wmText.Text = finalText
-					end
-
-					wmText.TextXAlignment = Enum.TextXAlignment.Left
-					wmText.Size = UDim2.new(1, -20, 1, 0)
-					wmText.Position = UDim2.new(0, 10, 0, 0)
-
-					
-					local stripText = string.format("%s | %s | %d FPS | %dms | %s", settings.Title, playerName, displayFPS, displayPing, displayTime)
-					local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamSemibold, Vector2.new(9999, 30))
-					targetWidth = textBounds.X + 26 
-				end
-
-				
-				local diff = math.abs(targetWidth - lastTargetWidth)
-				if diff > 3 or forceUpdate then
-					lastTargetWidth = targetWidth
-					tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-						Size = UDim2.new(0, targetWidth, 0, 30)
-					}):Play()
-				end
-
-				forceUpdate = false
+			if targetWidth ~= lastTargetWidth then
+				lastTargetWidth = targetWidth
+				tweenService:Create(self.wmContainer, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0), {
+					Size = UDim2.new(0, targetWidth, 0, 34)
+				}):Play()
 			end
 		end)
 	end
 	
-	self.watermark.Visible = self.wmSettings.Visible
+	self.wmContainer.Visible = self.wmSettings.Visible
 end
 
 function library:Init()
