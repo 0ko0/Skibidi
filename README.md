@@ -58,6 +58,7 @@ tab:AddToggle({
 ```lua
 tab:AddLabel({
     text = "hello",
+color = Color3.fromRGB(110, 150, 255) 
     align = "Left" -- "Left", "Center", "Right"
 })
 ```
