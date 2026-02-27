@@ -1295,14 +1295,21 @@ local function createList(option, parent, holder)
 				local targetHeight = updateDropdownSize()
 				local viewportY = workspace.CurrentCamera.ViewportSize.Y
 				
-				local targetY
-				if absPos.Y + absSize.Y + targetHeight + 10 > viewportY then
-					targetY = absPos.Y - targetHeight - 4 
-				else
-					targetY = absPos.Y + absSize.Y + 4 
+				local viewport = workspace.CurrentCamera.ViewportSize
+				
+				local targetX = absPos.X + absSize.X + 25
+				
+				if targetX + absSize.X + 10 > viewport.X then
+					targetX = absPos.X - absSize.X - 25
+				end
+
+				local targetY = absPos.Y
+				
+				if targetY + targetHeight + 10 > viewport.Y then
+					targetY = viewport.Y - targetHeight - 10
 				end
 				
-				option.mainHolder.Position = UDim2.new(0, absPos.X, 0, targetY)
+				option.mainHolder.Position = UDim2.new(0, targetX, 0, targetY)
 				option.mainHolder.Size = UDim2.new(0, absSize.X, 0, 0)
 				
 				tweenService:Create(arrow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Rotation = 0, ImageColor3 = ACCENT_COLOR}):Play()
