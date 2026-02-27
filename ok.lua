@@ -85,132 +85,225 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	local size = subHolder and 34 or 40
 	local MAX_MENU_HEIGHT = 450 
 
-	parentTable.main = library:Create("ImageButton", {
+	parentTable.main = library:Create("Frame", {
 		LayoutOrder = subHolder and parentTable.position or 0,
 		Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20),
 		Size = UDim2.new(0, 230, 0, size),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(20, 20, 20),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.04,
-		ClipsDescendants = true,
+		BackgroundColor3 = Color3.fromRGB(15, 15, 17),
+		BackgroundTransparency = subHolder and 1 or 0.05,
+		ClipsDescendants = false, 
 		Parent = parent
 	})
 	
-	local round
+	
+	library:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = parentTable.main })
+	
+	
+	local mainStroke = library:Create("UIStroke", {
+		Color = Color3.fromRGB(60, 60, 70),
+		Thickness = 1,
+		Transparency = subHolder and 1 or 0,
+		Parent = parentTable.main
+	})
+
 	if not subHolder then
-		round = library:Create("ImageLabel", {
-			Size = UDim2.new(1, 0, 0, size),
+		library:Create("ImageLabel", {
+			ZIndex = -1,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 4),
+			Size = UDim2.new(1, 30, 1, 30),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://3570695787",
-			ImageColor3 = parentTable.open and (subHolder and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)) or (subHolder and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)),
+			Image = "rbxassetid://4731308832",
+			ImageColor3 = Color3.fromRGB(0, 0, 0),
+			ImageTransparency = 0.5,
 			ScaleType = Enum.ScaleType.Slice,
-			SliceCenter = Rect.new(100, 100, 100, 100),
-			SliceScale = 0.04,
+			SliceCenter = Rect.new(21, 21, 278, 278),
 			Parent = parentTable.main
 		})
 	end
 	
-	local title = library:Create("TextLabel", {
+	local topBar = library:Create("Frame", {
 		Size = UDim2.new(1, 0, 0, size),
-		BackgroundTransparency = subHolder and 0 or 1,
-		BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+		BackgroundColor3 = subHolder and Color3.fromRGB(20, 20, 25) or Color3.fromRGB(25, 25, 30),
 		BorderSizePixel = 0,
-		Text = holderTitle,
-		TextSize = subHolder and 16 or 17,
-		Font = Enum.Font.SourceSans,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
+		ClipsDescendants = true,
 		Parent = parentTable.main
 	})
-	
-	local closeHolder = library:Create("Frame", {
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.new(-1, 0, 1, 0),
-		SizeConstraint = Enum.SizeConstraint.RelativeYY,
+	library:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = topBar })
+
+	local bottomHider = library:Create("Frame", {
+		Size = UDim2.new(1, 0, 0, 6),
+		Position = UDim2.new(0, 0, 1, -6),
+		BackgroundColor3 = subHolder and Color3.fromRGB(20, 20, 25) or Color3.fromRGB(25, 25, 30),
+		BorderSizePixel = 0,
+		BackgroundTransparency = parentTable.open and 0 or 1,
+		Parent = topBar
+	})
+
+	local title = library:Create("TextLabel", {
+		Size = UDim2.new(1, -30, 1, 0),
+		Position = UDim2.new(0, 12, 0, 0),
 		BackgroundTransparency = 1,
-		Parent = title
+		Text = holderTitle,
+		TextSize = subHolder and 14 or 15,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(240, 240, 245),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = topBar
+	})
+	
+	local closeHolder = library:Create("TextButton", {
+		Position = UDim2.new(1, -size, 0, 0),
+		Size = UDim2.new(0, size, 0, size),
+		BackgroundTransparency = 1,
+		Text = "",
+		Parent = topBar
 	})
 	
 	local close = library:Create("ImageLabel", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, -size - 10, 1, -size - 10),
-		Rotation = parentTable.open and 90 or 180,
+		Size = UDim2.new(0, 16, 0, 16),
+		Rotation = parentTable.open and 90 or 0,
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://4918373417",
-		ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30),
+		ImageColor3 = parentTable.open and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150),
 		ScaleType = Enum.ScaleType.Fit,
 		Parent = closeHolder
 	})
 	
-	parentTable.content = library:Create("ScrollingFrame", {
+	local contentClip = library:Create("Frame", {
 		Position = UDim2.new(0, 0, 0, size),
 		Size = UDim2.new(1, 0, 1, -size),
 		BackgroundTransparency = 1,
+		ClipsDescendants = true,
+		Parent = parentTable.main
+	})
+
+	parentTable.content = library:Create("ScrollingFrame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 3, 
-		ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255), 
+		ScrollBarThickness = 2, 
+		ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120), 
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
-		Parent = parentTable.main
+		Parent = contentClip
 	})
 	
 	local layout = library:Create("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 2),
 		Parent = parentTable.content
 	})
 	
+	library:Create("UIPadding", {
+		PaddingTop = UDim.new(0, 6),
+		PaddingBottom = UDim.new(0, 6),
+		Parent = parentTable.content
+	})
 	
 	layout.Changed:connect(function()
-		parentTable.content.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 5)
-		local targetHeight = math.min(layout.AbsoluteContentSize.Y + size, MAX_MENU_HEIGHT)
-		
-		parentTable.main.Size = #parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, targetHeight) or UDim2.new(0, 230, 0, size)
+		parentTable.content.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 12)
+		local targetHeight = math.min(layout.AbsoluteContentSize.Y + size + 12, MAX_MENU_HEIGHT)
+		if parentTable.open then
+			parentTable.main.Size = #parentTable.options > 0 and UDim2.new(0, 230, 0, targetHeight) or UDim2.new(0, 230, 0, size)
+		end
 	end)
+
+	local function createRipple(posX, posY)
+		local ripple = library:Create("ImageLabel", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0, posX, 0, posY),
+			Size = UDim2.new(0, 0, 0, 0),
+			BackgroundTransparency = 1,
+			Image = "rbxassetid://2708891598", 
+			ImageColor3 = Color3.fromRGB(255, 255, 255),
+			ImageTransparency = 0.6,
+			ZIndex = 5,
+			Parent = topBar
+		})
+		tweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			Size = UDim2.new(0, 300, 0, 300),
+			ImageTransparency = 1
+		}):Play()
+		task.delay(0.5, function() ripple:Destroy() end)
+	end
 	
 	if not subHolder then
-		library:Create("UIPadding", {
-			Parent = parentTable.content
-		})
-		
-		title.InputBegan:connect(function(input)
-			if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
-				dragObject = parentTable.main
+		local dragging, dragStart, startPos
+		local dragInputConnection, renderSteppedConnection
+		local targetPos = parentTable.main.Position
+
+		topBar.InputBegan:connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = true
 				dragStart = input.Position
-				startPos = dragObject.Position
+				startPos = parentTable.main.Position
+
+				local relativeX = input.Position.X - topBar.AbsolutePosition.X
+				local relativeY = input.Position.Y - topBar.AbsolutePosition.Y
+				createRipple(relativeX, relativeY)
+
+				if not renderSteppedConnection then
+					renderSteppedConnection = runService.RenderStepped:Connect(function()
+						
+						parentTable.main.Position = parentTable.main.Position:Lerp(targetPos, 0.25)
+					end)
+				end
 			end
 		end)
-		title.InputChanged:connect(function(input)
+
+		inputService.InputChanged:connect(function(input)
 			if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-				dragInput = input
+				local delta = input.Position - dragStart
+				local yPos = math.max((startPos.Y.Offset + delta.Y), -36)
+				targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, yPos)
 			end
 		end)
-		title.InputEnded:connect(function(input)
-			if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
+
+		inputService.InputEnded:connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				dragging = false
+				task.delay(0.5, function() 
+					if not dragging and renderSteppedConnection then
+						renderSteppedConnection:Disconnect()
+						renderSteppedConnection = nil
+					end
+				end)
+			end
+		end)
+
+		topBar.InputBegan:connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseMovement then
+				tweenService:Create(mainStroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(100, 100, 120)}):Play()
+			end
+		end)
+		topBar.InputEnded:connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseMovement then
+				tweenService:Create(mainStroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(60, 60, 70)}):Play()
 			end
 		end)
 	end
 	
-	closeHolder.InputBegan:connect(function(input)
+	local function toggleTab()
+		parentTable.open = not parentTable.open
 		
-		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
-			parentTable.open = not parentTable.open
-			tweenService:Create(close, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = parentTable.open and 90 or 180, ImageColor3 = parentTable.open and Color3.fromRGB(50, 50, 50) or Color3.fromRGB(30, 30, 30)}):Play()
-			if subHolder then
-				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
-			else
-				tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = parentTable.open and Color3.fromRGB(10, 10, 10) or Color3.fromRGB(6, 6, 6)}):Play()
-			end
-			
-			local targetHeight = math.min(layout.AbsoluteContentSize.Y + size, MAX_MENU_HEIGHT)
-			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, targetHeight) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
-		end
-	end)
+		tweenService:Create(close, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			Rotation = parentTable.open and 90 or 0, 
+			ImageColor3 = parentTable.open and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+		}):Play()
+		
+		bottomHider.BackgroundTransparency = parentTable.open and 0 or 1
+		
+		local targetHeight = math.min(layout.AbsoluteContentSize.Y + size + 12, MAX_MENU_HEIGHT)
+		local endSize = (#parentTable.options > 0 and parentTable.open) and UDim2.new(0, 230, 0, targetHeight) or UDim2.new(0, 230, 0, size)
+		
+		tweenService:Create(parentTable.main, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = endSize}):Play()
+	end
 
+	closeHolder.MouseButton1Click:Connect(toggleTab)
+	
 	function parentTable:SetTitle(newTitle)
 		title.Text = tostring(newTitle)
 	end
@@ -704,7 +797,7 @@ function createButton(option, parent)
 	local text = tostring(option.text or "Button")
 	local iconId = option.icon 
 	local isLocked = option.locked or false 
-	local accentColor = option.color or Color3.fromRGB(255, 255, 255) 
+	local accentColor = option.color or Color3.fromRGB(110, 150, 255) 
 
 	
 	local main = library:Create("Frame", {
@@ -3011,8 +3104,10 @@ function parent:AddDivider(option)
 	end
 end
 
-function library:CreateWindow(title)
-	local window = {title = tostring(title), options = {}, open = true, canInit = true, init = false, position = #self.windows}
+function library:CreateWindow(options)
+	local titleText = typeof(options) == "string" and options or (options.Title or options.title or "Window")
+	local window = {title = tostring(titleText), options = {}, open = true, canInit = true, init = false, position = #self.windows}
+
 	getFnctions(window)
 	
 	table.insert(library.windows, window)
