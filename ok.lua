@@ -83,7 +83,7 @@ end
 
 local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	local size = subHolder and 34 or 40
-	local MAX_MENU_HEIGHT = 450 
+	local MAX_MENU_HEIGHT = 400 
 
 	parentTable.main = library:Create("Frame", {
 		LayoutOrder = subHolder and parentTable.position or 0,
