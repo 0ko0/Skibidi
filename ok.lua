@@ -889,186 +889,295 @@ local function createBind(option, parent)
 end
 
 local function createSlider(option, parent)
+
+	local accentColor = option.color or Color3.fromRGB(114, 137, 218)
+	local bgDark = Color3.fromRGB(20, 20, 22)
+	local bgLight = Color3.fromRGB(40, 40, 45)
+	local textColor = Color3.fromRGB(240, 240, 240)
+	local textMuted = Color3.fromRGB(150, 150, 150)
+	
+	option.locked = option.locked or false
+
 	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 50),
+		Size = UDim2.new(1, 0, 0, 55),
 		BackgroundTransparency = 1,
+		Visible = option.visible ~= false,
 		Parent = parent.content
+	})
+	option.main = main
+	
+	local topFrame = library:Create("Frame", {
+		Size = UDim2.new(1, -20, 0, 24),
+		Position = UDim2.new(0, 10, 0, 4),
+		BackgroundTransparency = 1,
+		Parent = main
 	})
 	
 	local title = library:Create("TextLabel", {
-		Position = UDim2.new(0, 0, 0, 4),
-		Size = UDim2.new(1, 0, 0, 20),
+		Size = UDim2.new(1, -60, 1, 0),
 		BackgroundTransparency = 1,
-		Text = " " .. option.text,
-		TextSize = 17,
-		Font = Enum.Font.SourceSans,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
+		Text = option.text,
+		TextSize = 14,
+		Font = Enum.Font.GothamMedium,
+		TextColor3 = textColor,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Parent = main
+		Parent = topFrame
 	})
 	
-	local sliderBg = library:Create("ImageLabel", {
-		Position = UDim2.new(0, 10, 0, 34),
-		Size = UDim2.new(1, -20, 0, 5),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(30, 30, 30),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
-		Parent = main
+	local valueBg = library:Create("Frame", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		Size = UDim2.new(0, 45, 0, 20),
+		BackgroundColor3 = bgDark,
+		Parent = topFrame
 	})
-	
-	local fill = library:Create("ImageLabel", {
-		BackgroundTransparency = 1,
-		Size = UDim2.new(0, 0, 1, 0),
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(60, 60, 60),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
-		Parent = sliderBg
-	})
-	
-	local circle = library:Create("ImageLabel", {
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0, 0, 0.5, 0),
-		Size = UDim2.new(0, 0, 0, 0), 
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(255, 255, 255),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 1,
-		Parent = fill
-	})
-	
-	local valueRound = library:Create("ImageLabel", {
-		Position = UDim2.new(1, -6, 0, 4),
-		Size = UDim2.new(0, -60, 0, 18),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(40, 40, 40),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
-		Parent = main
+	library:Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = valueBg })
+	local valueStroke = library:Create("UIStroke", {
+		Color = bgLight,
+		Thickness = 1,
+		Parent = valueBg
 	})
 	
 	local inputvalue = library:Create("TextBox", {
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		Text = tostring(option.value),
-		TextColor3 = Color3.fromRGB(235, 235, 235),
-		TextSize = 15,
-		TextWrapped = true,
-		Font = Enum.Font.SourceSans,
-		Parent = valueRound
+		TextColor3 = textColor,
+		TextSize = 12,
+		Font = Enum.Font.Gotham,
+		TextEditable = not option.locked,
+		ClearTextOnFocus = false,
+		Parent = valueBg
+	})
+
+	local sliderArea = library:Create("TextButton", {
+		Position = UDim2.new(0, 10, 0, 32),
+		Size = UDim2.new(1, -20, 0, 16),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Parent = main
+	})
+	
+	local sliderBg = library:Create("Frame", {
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 0, 0.5, 0),
+		Size = UDim2.new(1, 0, 0, 4),
+		BackgroundColor3 = bgDark,
+		ClipsDescendants = false,
+		Parent = sliderArea
+	})
+	library:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = sliderBg })
+	library:Create("UIStroke", { Color = Color3.fromRGB(30, 30, 35), Thickness = 1, Parent = sliderBg })
+	
+	local fill = library:Create("Frame", {
+		Size = UDim2.new(0, 0, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		BorderSizePixel = 0,
+		Parent = sliderBg
+	})
+	library:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = fill })
+	local fillGradient = library:Create("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, accentColor),
+			ColorSequenceKeypoint.new(1, Color3.new(math.clamp(accentColor.R + 0.2, 0, 1), math.clamp(accentColor.G + 0.2, 0, 1), math.clamp(accentColor.B + 0.2, 0, 1)))
+		}),
+		Parent = fill
+	})
+	
+	local knob = library:Create("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		Size = UDim2.new(0, 12, 0, 12),
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		Parent = fill
+	})
+	library:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = knob })
+	local knobStroke = library:Create("UIStroke", {
+		Color = accentColor,
+		Thickness = 2,
+		Parent = knob
+	})
+	
+	local knobGlow = library:Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, 24, 0, 24),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://6015897843",
+		ImageColor3 = accentColor,
+		ImageTransparency = 1, 
+		ZIndex = 0,
+		Parent = knob
 	})
 
 	local sliding = false
 	local inContact = false
-
 	
+	local function formatValue(val)
+		local decimals = 0
+		if option.float < 1 then
+			local strFloat = tostring(option.float)
+			local dotIndex = strFloat:find("%.")
+			if dotIndex then
+				decimals = #strFloat:sub(dotIndex + 1)
+			end
+		end
+		local mult = 10 ^ decimals
+		local rounded = math.floor(val * mult + 0.5) / mult
+		return string.format("%." .. decimals .. "f", rounded), rounded
+	end
+
 	local function updateSlider(input)
 		local percent = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
 		local newValue = option.min + ((option.max - option.min) * percent)
 		option:SetValue(newValue)
 	end
 
-	main.InputBegan:Connect(function(input)
-		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
+	sliderArea.InputBegan:Connect(function(input)
+		if option.locked then return end
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			sliding = true
-			
-			tweenService:Create(fill, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-			tweenService:Create(circle, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 14, 0, 14), ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+			tweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 16, 0, 16)}):Play()
+			tweenService:Create(knobGlow, TweenInfo.new(0.2), {ImageTransparency = 0.6, Size = UDim2.new(0, 34, 0, 34)}):Play()
+			tweenService:Create(sliderBg, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 6)}):Play()
 			updateSlider(input)
-		end
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			inContact = true
-			if not sliding then
-				tweenService:Create(fill, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(120, 120, 120)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 10, 0, 10), ImageColor3 = Color3.fromRGB(120, 120, 120)}):Play()
-			end
 		end
 	end)
 	
+	sliderArea.MouseEnter:Connect(function()
+		if option.locked then return end
+		inContact = true
+		if not sliding then
+			tweenService:Create(knobStroke, TweenInfo.new(0.2), {Thickness = 3}):Play()
+		end
+	end)
 	
+	sliderArea.MouseLeave:Connect(function()
+		if option.locked then return end
+		inContact = false
+		if not sliding then
+			tweenService:Create(knobStroke, TweenInfo.new(0.2), {Thickness = 2}):Play()
+		end
+	end)
+
 	inputService.InputChanged:Connect(function(input)
 		if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			updateSlider(input)
 		end
 	end)
 
-	
 	inputService.InputEnded:Connect(function(input)
-		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			if sliding then
 				sliding = false
-				if inContact then
-					tweenService:Create(fill, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(120, 120, 120)}):Play()
-					tweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 10, 0, 10), ImageColor3 = Color3.fromRGB(120, 120, 120)}):Play()
-				else
-					tweenService:Create(fill, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-					tweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				end
+				local endKnobSize = inContact and UDim2.new(0, 14, 0, 14) or UDim2.new(0, 12, 0, 12)
+				tweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = endKnobSize}):Play()
+				tweenService:Create(knobGlow, TweenInfo.new(0.3), {ImageTransparency = 1, Size = UDim2.new(0, 24, 0, 24)}):Play()
+				tweenService:Create(sliderBg, TweenInfo.new(0.3), {Size = UDim2.new(1, 0, 0, 4)}):Play()
 			end
 		end
 	end)
 
-	main.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			inContact = false
-			inputvalue:ReleaseFocus()
-			if not sliding then
-				tweenService:Create(fill, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				tweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-			end
-		end
+	inputvalue.Focused:Connect(function()
+		if option.locked then inputvalue:ReleaseFocus() return end
+		tweenService:Create(valueStroke, TweenInfo.new(0.2), {Color = accentColor}):Play()
 	end)
-
 
 	inputvalue.FocusLost:Connect(function()
-		local num = tonumber(inputvalue.Text)
+		tweenService:Create(valueStroke, TweenInfo.new(0.2), {Color = bgLight}):Play()
+		local rawText = inputvalue.Text:gsub("[^%-%d%.]", "")
+		local num = tonumber(rawText)
+		
 		if num then
 			option:SetValue(num)
 		else
-			inputvalue.Text = tostring(option.value)
-		end
-		if not inContact and not sliding then
-			tweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 0, 0, 0), ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			local formattedStr, _ = formatValue(option.value)
+			inputvalue.Text = formattedStr
 		end
 	end)
 
-	
 	function option:SetValue(value)
+		value = math.clamp(value, self.min, self.max)
+		local formattedStr, finalValue = formatValue(value)
+		local percent = (finalValue - self.min) / (self.max - self.min)
+
+		tweenService:Create(fill, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(percent, 0, 1, 0)}):Play()
 		
-		value = math.clamp(round(value, self.float), self.min, self.max)
-		local percent = (value - self.min) / (self.max - self.min)
+		library.flags[self.flag] = finalValue
+		self.value = finalValue
 		
-		
-		local decimals = 0
-		if self.float < 1 then
-			local strFloat = tostring(self.float)
-			local dotIndex = strFloat:find("%.")
-			if dotIndex then
-				decimals = #strFloat:sub(dotIndex + 1)
-			end
+		if not inputvalue.IsFocused then
+			inputvalue.Text = formattedStr
+			local textBounds = textService:GetTextSize(formattedStr, 12, Enum.Font.Gotham, Vector2.new(999, 20))
+			local newBoxWidth = math.clamp(textBounds.X + 16, 35, 80)
+			tweenService:Create(valueBg, TweenInfo.new(0.2), {Size = UDim2.new(0, newBoxWidth, 0, 20)}):Play()
 		end
-		local formattedValue = string.format("%." .. decimals .. "f", value)
-
-
-		fill:TweenSize(UDim2.new(percent, 0, 1, 0), "Out", "Quint", 0.15, true)
-		circle.Position = UDim2.new(1, 0, 0.5, 0) 
-
-		library.flags[self.flag] = value
-		self.value = value
-		inputvalue.Text = formattedValue
-		self.callback(value)
+		
+		pcall(function() self.callback(finalValue) end)
 	end
 
+	function option:SetText(newText)
+		title.Text = tostring(newText)
+		self.text = tostring(newText)
+	end
+
+	function option:SetMinMax(min, max)
+		self.min = tonumber(min) or self.min
+		self.max = tonumber(max) or self.max
+		self:SetValue(self.value) 
+	end
+
+	function option:SetColor(newColor)
+		accentColor = newColor
+		fillGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, accentColor),
+			ColorSequenceKeypoint.new(1, Color3.new(math.clamp(accentColor.R + 0.2, 0, 1), math.clamp(accentColor.G + 0.2, 0, 1), math.clamp(accentColor.B + 0.2, 0, 1)))
+		})
+		knobStroke.Color = accentColor
+		knobGlow.ImageColor3 = accentColor
+	end
+
+	function option:SetVisible(state)
+		main.Visible = state
+		self.visible = state
+	end
+
+	function option:SetLocked(state)
+		self.locked = state
+		inputvalue.TextEditable = not state
+		
+		local targetTextColor = state and Color3.fromRGB(120, 120, 120) or textColor
+		local targetStrokeColor = state and Color3.fromRGB(60, 60, 60) or accentColor
+		
+		tweenService:Create(title, TweenInfo.new(0.3), {TextColor3 = targetTextColor}):Play()
+		tweenService:Create(inputvalue, TweenInfo.new(0.3), {TextColor3 = targetTextColor}):Play()
+		
+		if state then
+			fillGradient.Color = ColorSequence.new(Color3.fromRGB(100, 100, 100))
+			knobStroke.Color = Color3.fromRGB(100, 100, 100)
+		else
+			self:SetColor(accentColor) 
+		end
+	end
+
+	
 	option:SetValue(option.value)
+	if option.locked then option:SetLocked(true) end
+
+	setmetatable(option, {
+		__newindex = function(t, i, v)
+			if i == "Value" or i == "value" then t:SetValue(v)
+			elseif i == "Text" or i == "text" then t:SetText(v)
+			elseif i == "Locked" or i == "locked" then t:SetLocked(v)
+			elseif i == "Visible" or i == "visible" then t:SetVisible(v)
+			elseif i == "Color" or i == "color" then t:SetColor(v)
+			else rawset(t, i, v) end
+		end
+	})
+
+	return option
 end
 
 local function createList(option, parent, holder)
