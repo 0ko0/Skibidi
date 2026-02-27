@@ -993,75 +993,72 @@ end
 local function createList(option, parent, holder)
 	local valueCount = 0
 	local items = {}
+	local ACCENT_COLOR = option.color or Color3.fromRGB(110, 150, 255)
 	
+	
+	option.multiselect = option.multiselect or false
+	option.maxSelect = option.maxSelect or math.huge 
+	option.locked = option.locked or false 
+	option.allowNull = option.allowNull == nil and true or option.allowNull 
+	option.value = option.value or (option.multiselect and {} or "")
+
 	
 	option.main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 52),
+		Size = UDim2.new(1, 0, 0, 56),
 		BackgroundTransparency = 1,
 		Parent = parent.content
 	})
 	local main = option.main
 	
-	local round = library:Create("ImageLabel", {
-		Position = UDim2.new(0, 6, 0, 4),
-		Size = UDim2.new(1, -12, 1, -10),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(40, 40, 40),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
-		Parent = main
-	})
-	
 	local title = library:Create("TextLabel", {
-		Position = UDim2.new(0, 12, 0, 8),
-		Size = UDim2.new(1, -24, 0, 14),
+		Position = UDim2.new(0, 10, 0, 4),
+		Size = UDim2.new(1, -20, 0, 14),
 		BackgroundTransparency = 1,
 		Text = option.text,
 		TextSize = 14,
-		Font = Enum.Font.SourceSansBold,
-		TextColor3 = Color3.fromRGB(160, 160, 160),
+		Font = Enum.Font.GothamSemibold,
+		TextColor3 = Color3.fromRGB(180, 180, 180),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = main
+	})
+
+	local round = library:Create("ImageLabel", {
+		Position = UDim2.new(0, 8, 0, 22),
+		Size = UDim2.new(1, -16, 1, -26),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(20, 20, 22),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.03,
+		Parent = main
+	})
+
+	local stroke = library:Create("UIStroke", {
+		Color = Color3.fromRGB(50, 50, 50),
+		Thickness = 1.2,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = round
 	})
 	
 	local listvalue = library:Create("TextLabel", {
-		Position = UDim2.new(0, 12, 0, 22),
-		Size = UDim2.new(1, -24, 0, 20),
+		Position = UDim2.new(0, 10, 0, 0),
+		Size = UDim2.new(1, -60, 1, 0),
 		BackgroundTransparency = 1,
 		Text = "",
-		TextSize = 16,
-		Font = Enum.Font.SourceSans,
+		TextSize = 13,
+		Font = Enum.Font.Gotham,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd, 
-		Parent = main
+		Parent = round
 	})
-	
-	local function updateDisplayText()
-		if option.multiselect then
-			if type(option.value) == "table" then
-				if #option.value == 0 then
-					listvalue.Text = "None"
-				else
-					listvalue.Text = table.concat(option.value, ", ")
-				end
-			else
-				listvalue.Text = "None"
-			end
-		else
-			listvalue.Text = tostring(option.value)
-		end
-	end
-	
-	updateDisplayText()
 	
 	local arrow = library:Create("ImageLabel", {
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -10, 0.5, 0),
-		Size = UDim2.new(0, 20, 0, 20),
+		Position = UDim2.new(1, -8, 0.5, 0),
+		Size = UDim2.new(0, 16, 0, 16),
 		Rotation = 90, 
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://4918373417",
@@ -1069,37 +1066,133 @@ local function createList(option, parent, holder)
 		ScaleType = Enum.ScaleType.Fit,
 		Parent = round
 	})
+
 	
-	option.mainHolder = library:Create("ImageButton", {
-		ZIndex = 50,
-		Size = UDim2.new(0, 230, 0, 0),
+	local clearBtn = library:Create("ImageButton", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -28, 0.5, 0),
+		Size = UDim2.new(0, 14, 0, 14),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(25, 25, 25),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
-		ClipsDescendants = true,
+		Image = "rbxassetid://3926305904",
+		ImageRectOffset = Vector2.new(924, 724),
+		ImageRectSize = Vector2.new(36, 36),
+		ImageColor3 = Color3.fromRGB(150, 150, 150),
+		Visible = false,
+		ZIndex = 5,
+		Parent = round
+	})
+
+	local function updateDisplayText()
+		local hasValue = false
+		if option.multiselect then
+			if type(option.value) == "table" then
+				if #option.value == 0 then
+					listvalue.Text = "Select options..."
+					listvalue.TextColor3 = Color3.fromRGB(120, 120, 120)
+				elseif #option.value <= 2 then
+					listvalue.Text = table.concat(option.value, ", ")
+					listvalue.TextColor3 = Color3.fromRGB(255, 255, 255)
+					hasValue = true
+				else
+					listvalue.Text = tostring(#option.value) .. "/" .. (option.maxSelect == math.huge and "∞" or tostring(option.maxSelect)) .. " Selected"
+					listvalue.TextColor3 = ACCENT_COLOR
+					hasValue = true
+				end
+			end
+		else
+			if option.value == "" then
+				listvalue.Text = "Select option..."
+				listvalue.TextColor3 = Color3.fromRGB(120, 120, 120)
+			else
+				listvalue.Text = tostring(option.value)
+				listvalue.TextColor3 = Color3.fromRGB(255, 255, 255)
+				hasValue = true
+			end
+		end
+		
+		
+		clearBtn.Visible = hasValue and option.allowNull and not option.locked
+	end
+	updateDisplayText()
+
+	
+	clearBtn.MouseButton1Click:Connect(function()
+		if option.locked then return end
+		option:SetValue(option.multiselect and {} or "")
+		tweenService:Create(clearBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+		task.delay(0.2, function() tweenService:Create(clearBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(150, 150, 150)}):Play() end)
+	end)
+	
+	
+	option.mainHolder = library:Create("Frame", {
+		ZIndex = 50,
+		Size = UDim2.new(0, 0, 0, 0),
+		BackgroundTransparency = 1,
 		Visible = false,
 		Parent = library.base
 	})
-	
-	local searchBoxHolder = library:Create("Frame", {
-		ZIndex = 51,
-		Size = UDim2.new(1, 0, 0, 30),
+
+	local dropShadow = library:Create("ImageLabel", {
+		ZIndex = 49,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, -2),
+		Size = UDim2.new(1, 16, 1, 18),
 		BackgroundTransparency = 1,
+		Image = "rbxassetid://4731308832",
+		ImageColor3 = Color3.fromRGB(0, 0, 0),
+		ImageTransparency = 0.5,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(21, 21, 278, 278),
+		Parent = option.mainHolder
+	})
+
+	local dropBg = library:Create("ImageLabel", {
+		ZIndex = 50,
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3570695787",
+		ImageColor3 = Color3.fromRGB(25, 25, 30),
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(100, 100, 100, 100),
+		SliceScale = 0.03,
+		ClipsDescendants = true,
 		Parent = option.mainHolder
 	})
 	
+	library:Create("UIStroke", {
+		Color = Color3.fromRGB(60, 60, 60),
+		Thickness = 1,
+		Parent = dropBg
+	})
+
+	
+	local searchBoxHolder = library:Create("Frame", {
+		ZIndex = 51,
+		Size = UDim2.new(1, 0, 0, 32),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+		BorderSizePixel = 0,
+		Parent = dropBg
+	})
+	
+	local searchIcon = library:Create("ImageLabel", {
+		ZIndex = 52,
+		Position = UDim2.new(0, 8, 0, 8),
+		Size = UDim2.new(0, 16, 0, 16),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://6031154871",
+		ImageColor3 = Color3.fromRGB(150, 150, 150),
+		Parent = searchBoxHolder
+	})
+
 	local searchBox = library:Create("TextBox", {
 		ZIndex = 52,
-		Position = UDim2.new(0, 10, 0, 5),
-		Size = UDim2.new(1, -20, 0, 20),
+		Position = UDim2.new(0, 30, 0, 0),
+		Size = UDim2.new(1, -38, 1, 0),
 		BackgroundTransparency = 1,
 		PlaceholderText = "Search...",
 		Text = "",
-		TextSize = 14,
-		Font = Enum.Font.SourceSans,
+		TextSize = 13,
+		Font = Enum.Font.Gotham,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
 		PlaceholderColor3 = Color3.fromRGB(120, 120, 120),
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -1108,23 +1201,57 @@ local function createList(option, parent, holder)
 	
 	library:Create("Frame", {
 		ZIndex = 51,
-		Position = UDim2.new(0, 5, 1, -1),
-		Size = UDim2.new(1, -10, 0, 1),
+		Position = UDim2.new(0, 0, 1, -1),
+		Size = UDim2.new(1, 0, 0, 1),
 		BorderSizePixel = 0,
-		BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+		BackgroundColor3 = Color3.fromRGB(50, 50, 55),
 		Parent = searchBoxHolder
 	})
+
+	
+	local actionOffset = 32
+	if option.multiselect then
+		actionOffset = 58
+		local actionHolder = library:Create("Frame", {
+			ZIndex = 51,
+			Position = UDim2.new(0, 0, 0, 32),
+			Size = UDim2.new(1, 0, 0, 26),
+			BackgroundColor3 = Color3.fromRGB(22, 22, 26),
+			BorderSizePixel = 0,
+			Parent = dropBg
+		})
+
+		local selectAllBtn = library:Create("TextButton", {
+			ZIndex = 52, Size = UDim2.new(0.5, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0),
+			BackgroundTransparency = 1, Text = "Select All", TextSize = 11, Font = Enum.Font.GothamBold,
+			TextColor3 = ACCENT_COLOR, Parent = actionHolder
+		})
+		local deselectAllBtn = library:Create("TextButton", {
+			ZIndex = 52, Size = UDim2.new(0.5, 0, 1, 0), Position = UDim2.new(0.5, 0, 0, 0),
+			BackgroundTransparency = 1, Text = "Deselect All", TextSize = 11, Font = Enum.Font.GothamBold,
+			TextColor3 = Color3.fromRGB(255, 100, 100), Parent = actionHolder
+		})
+
+		selectAllBtn.MouseButton1Click:Connect(function()
+			local all = {}
+			for i, v in ipairs(items) do if i <= option.maxSelect then table.insert(all, v.name) end end
+			option:SetValue(all)
+		end)
+		deselectAllBtn.MouseButton1Click:Connect(function() option:SetValue({}) end)
+		
+		library:Create("Frame", {ZIndex = 51, Position = UDim2.new(0, 0, 1, -1), Size = UDim2.new(1, 0, 0, 1), BackgroundColor3 = Color3.fromRGB(50, 50, 55), BorderSizePixel = 0, Parent = actionHolder})
+	end
 	
 	local content = library:Create("ScrollingFrame", {
 		ZIndex = 51,
-		Position = UDim2.new(0, 0, 0, 30),
-		Size = UDim2.new(1, 0, 1, -30),
+		Position = UDim2.new(0, 0, 0, actionOffset),
+		Size = UDim2.new(1, 0, 1, -actionOffset),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80),
-		ScrollBarThickness = 4,
+		ScrollBarImageColor3 = ACCENT_COLOR,
+		ScrollBarThickness = 2,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
-		Parent = option.mainHolder
+		Parent = dropBg
 	})
 	
 	local layout = library:Create("UIListLayout", {
@@ -1134,24 +1261,25 @@ local function createList(option, parent, holder)
 	})
 	
 	library:Create("UIPadding", {
-		PaddingTop = UDim.new(0, 5),
-		PaddingBottom = UDim.new(0, 5),
+		PaddingTop = UDim.new(0, 4),
+		PaddingBottom = UDim.new(0, 4),
 		Parent = content
 	})
 	
 	local function updateDropdownSize()
-		local contentHeight = layout.AbsoluteContentSize.Y + 10
-		local targetHeight = math.clamp(contentHeight, 0, 150) + 30
+		local contentHeight = layout.AbsoluteContentSize.Y + 8
+		local targetHeight = math.clamp(contentHeight, 0, 180) + actionOffset
 		content.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
 		return targetHeight
 	end
 
-	local inContact
+	
+	local inContact = false
 	round.InputBegan:connect(function(input)
+		if option.locked then return end
+		
 		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
-			if library.activePopup and library.activePopup ~= option then
-				library.activePopup:Close()
-			end
+			if library.activePopup and library.activePopup ~= option then library.activePopup:Close() end
 			
 			if option.open then
 				option:Close()
@@ -1161,42 +1289,52 @@ local function createList(option, parent, holder)
 				option.mainHolder.Visible = true
 				searchBox.Text = "" 
 				
-				
 				task.wait()
-				
-				local absPos = main.AbsolutePosition
+				local absPos = round.AbsolutePosition
+				local absSize = round.AbsoluteSize
 				local targetHeight = updateDropdownSize()
 				local viewportY = workspace.CurrentCamera.ViewportSize.Y
 				
-				
-				local targetX = absPos.X + main.AbsoluteSize.X + 10
-				
-				
-				local targetY = absPos.Y
-				
-				if targetY + targetHeight > viewportY then
-					targetY = math.max(10, viewportY - targetHeight - 10)
+				local targetY
+				if absPos.Y + absSize.Y + targetHeight + 10 > viewportY then
+					targetY = absPos.Y - targetHeight - 4 
+				else
+					targetY = absPos.Y + absSize.Y + 4 
 				end
 				
+				option.mainHolder.Position = UDim2.new(0, absPos.X, 0, targetY)
+				option.mainHolder.Size = UDim2.new(0, absSize.X, 0, 0)
 				
-				option.mainHolder.Position = UDim2.new(0, targetX, 0, targetY)
-				option.mainHolder.Size = UDim2.new(0, round.AbsoluteSize.X, 0, 0)
+				tweenService:Create(arrow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Rotation = 0, ImageColor3 = ACCENT_COLOR}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Color = ACCENT_COLOR}):Play()
+				tweenService:Create(round, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(30, 30, 35)}):Play()
 				
-tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-    Rotation = 0, 
-    Position = UDim2.new(1, -4, 0.5, 0),
-    ImageColor3 = Color3.fromRGB(255, 255, 255)
-}):Play()
-				tweenService:Create(round, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, round.AbsoluteSize.X, 0, targetHeight)
+				tweenService:Create(option.mainHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					Size = UDim2.new(0, absSize.X, 0, targetHeight)
 				}):Play()
+
+				
+				if option.value ~= "" then
+					for _, item in pairs(items) do
+						local isSelected = option.multiselect and table.find(option.value, item.name) or option.value == item.name
+						if isSelected then
+							task.spawn(function()
+								task.wait(0.1)
+								local targetScroll = item.instance.AbsolutePosition.Y - content.AbsolutePosition.Y
+								tweenService:Create(content, TweenInfo.new(0.3), {CanvasPosition = Vector2.new(0, targetScroll)}):Play()
+							end)
+							break
+						end
+					end
+				end
 			end
 		end
+		
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = true
-			if not option.open then
-				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			if not option.open and not option.locked then
+				tweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(100, 100, 100)}):Play()
+				tweenService:Create(round, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(25, 25, 30)}):Play()
 			end
 		end
 	end)
@@ -1204,8 +1342,9 @@ tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.Easing
 	round.InputEnded:connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = false
-			if not option.open then
-				tweenService:Create(round, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+			if not option.open and not option.locked then
+				tweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(50, 50, 50)}):Play()
+				tweenService:Create(round, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(20, 20, 22)}):Play()
 			end
 		end
 	end)
@@ -1219,165 +1358,169 @@ tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.Easing
 				item.instance.Visible = false
 			end
 		end
-		
 		task.spawn(function()
 			task.wait()
 			if option.open then
-				local targetHeight = updateDropdownSize()
-				tweenService:Create(option.mainHolder, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, round.AbsoluteSize.X, 0, targetHeight)
-				}):Play()
+				tweenService:Create(option.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, round.AbsoluteSize.X, 0, updateDropdownSize())}):Play()
 			end
 		end)
 	end)
+
+	
+	local function createItemRipple(btn, color)
+		local ripple = library:Create("ImageLabel", {
+			BackgroundTransparency = 1, Image = "rbxassetid://2708891598", ImageColor3 = color, ImageTransparency = 0.6,
+			ZIndex = 55, Parent = btn, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 0, 0, 0)
+		})
+		tweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, 50, 1, 50), ImageTransparency = 1}):Play()
+		game.Debris:AddItem(ripple, 0.5)
+	end
+
+	
+	local function shakeUI(uiElem)
+		local orig = uiElem.Position
+		local t = TweenInfo.new(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 3, true)
+		tweenService:Create(uiElem, t, {Position = orig + UDim2.new(0, 4, 0, 0)}):Play()
+	end
+	
 	
 	function option:AddValue(value)
-		local isSelected = false
-		if self.multiselect then
-			isSelected = table.find(self.value, tostring(value)) ~= nil
-		else
-			isSelected = (self.value == tostring(value))
-		end
-		
+		local isSelected = option.multiselect and (table.find(option.value, tostring(value)) ~= nil) or (option.value == tostring(value))
 		valueCount = valueCount + 1
 		
 		local btn = library:Create("TextButton", {
-			ZIndex = 52,
-			Size = UDim2.new(1, -10, 0, 26),
-			BackgroundTransparency = isSelected and 0.8 or 1,
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-			BorderSizePixel = 0,
-			Text = "  " .. tostring(value),
-			TextSize = 14,
-			Font = Enum.Font.SourceSans,
-			TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180),
-			TextXAlignment = Enum.TextXAlignment.Left,
-			AutoButtonColor = false,
-			Parent = content
+			ZIndex = 52, Size = UDim2.new(1, -8, 0, 28), BackgroundTransparency = isSelected and 0.85 or 1,
+			BackgroundColor3 = ACCENT_COLOR, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ClipsDescendants = true, Parent = content
+		})
+		library:Create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = btn })
+		
+		local accentLine = library:Create("Frame", {
+			ZIndex = 53, Size = UDim2.new(0, 3, 1, -12), Position = UDim2.new(0, 4, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5),
+			BackgroundColor3 = ACCENT_COLOR, BorderSizePixel = 0, BackgroundTransparency = isSelected and 0 or 1, Parent = btn
+		})
+		library:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accentLine })
+
+		local itemText = library:Create("TextLabel", {
+			ZIndex = 53, Size = UDim2.new(1, -40, 1, 0), Position = UDim2.new(0, isSelected and 28 or 12, 0, 0), BackgroundTransparency = 1,
+			Text = tostring(value), TextSize = 13, Font = isSelected and Enum.Font.GothamSemibold or Enum.Font.Gotham,
+			TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180), TextXAlignment = Enum.TextXAlignment.Left, Parent = btn
+		})
+
+		local checkIcon = library:Create("ImageLabel", {
+			ZIndex = 53, Size = UDim2.new(0, 14, 0, 14), Position = UDim2.new(0, 10, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5), BackgroundTransparency = 1,
+			Image = "rbxassetid://6031094667", ImageColor3 = ACCENT_COLOR, ImageTransparency = isSelected and 0 or 1, Parent = btn
 		})
 		
-		library:Create("UICorner", {
-			CornerRadius = UDim.new(0, 4),
-			Parent = btn
-		})
-		
-		table.insert(items, {name = tostring(value), instance = btn})
+		table.insert(items, {name = tostring(value), instance = btn, textLabel = itemText, check = checkIcon, line = accentLine})
 		
 		btn.InputBegan:connect(function(input)
 			if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 				if self.multiselect then
 					local index = table.find(self.value, tostring(value))
 					if index then
+						
+						if not self.allowNull and #self.value <= 1 then
+							shakeUI(btn) createItemRipple(btn, Color3.fromRGB(255, 50, 50)) return
+						end
 						table.remove(self.value, index)
 					else
+				
+						if #self.value >= self.maxSelect then
+							shakeUI(btn) createItemRipple(btn, Color3.fromRGB(255, 50, 50)) return
+						end
 						table.insert(self.value, tostring(value))
 					end
+					createItemRipple(btn, ACCENT_COLOR)
 					self:SetValue(self.value)
-					
 				else
+					if not self.allowNull and self.value == tostring(value) then return end
+					createItemRipple(btn, ACCENT_COLOR)
 					self:SetValue(value)
 					self:Close()
 				end
 			end
-			if input.UserInputType == Enum.UserInputType.MouseMovement then
-				local currentSelected = self.multiselect and table.find(self.value, tostring(value)) ~= nil or self.value == tostring(value)
-				if not currentSelected then
-					tweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.95, TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-				end
+		end)
+		
+		btn.MouseEnter:Connect(function()
+			if not (self.multiselect and table.find(self.value, tostring(value)) or self.value == tostring(value)) then
+				tweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.95, BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+				tweenService:Create(itemText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(230, 230, 230), Position = UDim2.new(0, 16, 0, 0)}):Play()
 			end
 		end)
 		
-		btn.InputEnded:connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseMovement then
-				local currentSelected = self.multiselect and table.find(self.value, tostring(value)) ~= nil or self.value == tostring(value)
-				if not currentSelected then
-					tweenService:Create(btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
-				end
+		btn.MouseLeave:Connect(function()
+			if not (self.multiselect and table.find(self.value, tostring(value)) or self.value == tostring(value)) then
+				tweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+				tweenService:Create(itemText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(180, 180, 180), Position = UDim2.new(0, 12, 0, 0)}):Play()
 			end
 		end)
-		
 		if option.open then updateDropdownSize() end
 	end
 
-	for _, value in next, option.values do
-		option:AddValue(tostring(value))
-	end
+	for _, value in next, option.values do option:AddValue(tostring(value)) end
 	
 	function option:Refresh(newValues)
-		for _, item in pairs(items) do
-			item.instance:Destroy()
-		end
-		items = {}
-		valueCount = 0
-		
-		for _, val in pairs(newValues) do
-			self:AddValue(tostring(val))
-		end
+		for _, item in pairs(items) do item.instance:Destroy() end
+		items = {} valueCount = 0
+		for _, val in pairs(newValues) do self:AddValue(tostring(val)) end
 		
 		if self.multiselect then
 			local validValues = {}
-			for _, v in pairs(self.value) do
-				if table.find(newValues, v) then
-					table.insert(validValues, v)
-				end
-			end
+			for _, v in pairs(self.value) do if table.find(newValues, v) then table.insert(validValues, v) end end
 			self:SetValue(validValues)
 		else
-			if not table.find(newValues, self.value) then
-				self:SetValue(newValues[1] or "")
-			else
-				self:SetValue(self.value)
-			end
+			self:SetValue(table.find(newValues, self.value) and self.value or (newValues[1] or ""))
 		end
 	end
 	
+	
 	function option:SetValue(value)
 		if self.multiselect then
-			if type(value) ~= "table" then value = {tostring(value)} end
-			self.value = value
-			library.flags[self.flag] = self.value
+			self.value = type(value) == "table" and value or {tostring(value)}
 		else
 			self.value = tostring(value)
-			library.flags[self.flag] = self.value
 		end
-		
+		library.flags[self.flag] = self.value
 		updateDisplayText()
 		
 		for _, item in pairs(items) do
-			local isSelected = false
-			if self.multiselect then
-				isSelected = table.find(self.value, item.name) ~= nil
-			else
-				isSelected = (item.name == self.value)
-			end
-			
-			tweenService:Create(item.instance, TweenInfo.new(0.2), {
-				BackgroundTransparency = isSelected and 0.8 or 1,
-				TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180)
-			}):Play()
+			local isSelected = self.multiselect and table.find(self.value, item.name) ~= nil or item.name == self.value
+			local tInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			tweenService:Create(item.instance, tInfo, {BackgroundTransparency = isSelected and 0.85 or 1, BackgroundColor3 = isSelected and ACCENT_COLOR or Color3.fromRGB(255, 255, 255)}):Play()
+			tweenService:Create(item.textLabel, tInfo, {TextColor3 = isSelected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(180, 180, 180), Position = UDim2.new(0, isSelected and 28 or 12, 0, 0)}):Play()
+			item.textLabel.Font = isSelected and Enum.Font.GothamSemibold or Enum.Font.Gotham
+			tweenService:Create(item.line, tInfo, {BackgroundTransparency = isSelected and 0 or 1}):Play()
+			tweenService:Create(item.check, tInfo, {ImageTransparency = isSelected and 0 or 1}):Play()
 		end
-		
-		self.callback(self.value)
+		pcall(self.callback, self.value)
 	end
+	
+	
+	function option:SetLocked(state)
+		self.locked = state
+		if state and self.open then self:Close() end
+		local targetColor = state and Color3.fromRGB(30, 30, 32) or Color3.fromRGB(20, 20, 22)
+		local targetStroke = state and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(50, 50, 50)
+		local targetText = state and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(180, 180, 180)
+		
+		tweenService:Create(round, TweenInfo.new(0.3), {ImageColor3 = targetColor}):Play()
+		tweenService:Create(stroke, TweenInfo.new(0.3), {Color = targetStroke}):Play()
+		tweenService:Create(title, TweenInfo.new(0.3), {TextColor3 = targetText}):Play()
+		tweenService:Create(arrow, TweenInfo.new(0.3), {ImageColor3 = targetText}):Play()
+		clearBtn.Visible = (not state) and (self.value ~= "" and self.allowNull)
+	end
+
 	
 	function option:Close()
 		library.activePopup = nil
 		self.open = false
-		
-tweenService:Create(arrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-    Rotation = 90, 
-    Position = UDim2.new(1, -10, 0.5, 0),
-    ImageColor3 = Color3.fromRGB(160, 160, 160)
-}):Play()
-		tweenService:Create(round, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = inContact and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)}):Play()
+		tweenService:Create(arrow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Rotation = 90, ImageColor3 = Color3.fromRGB(160, 160, 160)}):Play()
+		tweenService:Create(stroke, TweenInfo.new(0.3), {Color = inContact and Color3.fromRGB(100, 100, 100) or Color3.fromRGB(50, 50, 50)}):Play()
+		tweenService:Create(round, TweenInfo.new(0.3), {ImageColor3 = inContact and Color3.fromRGB(25, 25, 30) or Color3.fromRGB(20, 20, 22)}):Play()
 		
 		local closeTween = tweenService:Create(self.mainHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, round.AbsoluteSize.X, 0, 0)})
 		closeTween:Play()
-		closeTween.Completed:Wait()
-		
-		if not self.open then
-			self.mainHolder.Visible = false
-		end
+		task.delay(0.3, function() if not self.open then self.mainHolder.Visible = false end end)
 	end
 
 	return option
