@@ -1534,154 +1534,255 @@ local function createList(option, parent, holder)
 end
 
 local function createBox(option, parent)
+	local padding = 10
+	local hasIcon = option.icon and option.icon ~= ""
+	local maxLength = option.maxLength or 0
+	
 	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 56), 
+		Size = UDim2.new(1, 0, 0, 64), 
 		BackgroundTransparency = 1,
 		Parent = parent.content
 	})
-	
-	
+
 	local title = library:Create("TextLabel", {
-		Position = UDim2.new(0, 10, 0, 4),
+		Position = UDim2.new(0, padding, 0, 4),
 		Size = UDim2.new(1, -20, 0, 14),
 		BackgroundTransparency = 1,
 		Text = option.text,
 		TextSize = 14,
 		Font = Enum.Font.GothamSemibold, 
-		TextColor3 = Color3.fromRGB(180, 180, 180),
+		TextColor3 = Color3.fromRGB(200, 200, 200),
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = main
 	})
 
-	local outline = library:Create("ImageLabel", {
-		Position = UDim2.new(0, 8, 0, 22),
-		Size = UDim2.new(1, -16, 1, -26),
+	local charCount = library:Create("TextLabel", {
+		Position = UDim2.new(0, padding, 0, 4),
+		Size = UDim2.new(1, -20, 0, 14),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(50, 50, 50),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.03,
+		Text = maxLength > 0 and "0/" .. tostring(maxLength) or "",
+		TextSize = 12,
+		Font = Enum.Font.Gotham, 
+		TextColor3 = Color3.fromRGB(120, 120, 120),
+		TextXAlignment = Enum.TextXAlignment.Right,
+		Parent = main
+	})
+
+	local boxBg = library:Create("Frame", {
+		Position = UDim2.new(0, padding, 0, 24),
+		Size = UDim2.new(1, -(padding * 2), 1, -28),
+		BackgroundColor3 = Color3.fromRGB(25, 25, 28),
 		Parent = main
 	})
 	
-	
-	local round = library:Create("ImageLabel", {
-		Position = UDim2.new(0, 1, 0, 1),
-		Size = UDim2.new(1, -2, 1, -2),
+	library:Create("UICorner", {
+		CornerRadius = UDim.new(0, 6),
+		Parent = boxBg
+	})
+
+	local stroke = library:Create("UIStroke", {
+		Color = Color3.fromRGB(50, 50, 55),
+		Thickness = 1.2,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = boxBg
+	})
+
+	local glow = library:Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, 20, 1, 20),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(20, 20, 20),
+		Image = "rbxassetid://6015897843", 
+		ImageColor3 = Color3.fromRGB(100, 150, 255),
+		ImageTransparency = 1,
 		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.03,
-		ClipsDescendants = true,
-		Parent = outline
+		SliceCenter = Rect.new(49, 49, 450, 450),
+		ZIndex = 0,
+		Parent = boxBg
 	})
-	
-	
-	local accentLine = library:Create("Frame", {
-		Position = UDim2.new(0.5, 0, 1, -1),
-		AnchorPoint = Vector2.new(0.5, 1),
-		Size = UDim2.new(0, 0, 0, 2), 
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-		BorderSizePixel = 0,
-		Parent = round
+
+	local iconImage
+	if hasIcon then
+		iconImage = library:Create("ImageLabel", {
+			Position = UDim2.new(0, 10, 0.5, -9),
+			Size = UDim2.new(0, 18, 0, 18),
+			BackgroundTransparency = 1,
+			Image = option.icon,
+			ImageColor3 = Color3.fromRGB(120, 120, 120),
+			Parent = boxBg
+		})
+	end
+
+	local clearBtn = library:Create("ImageButton", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -8, 0.5, 0),
+		Size = UDim2.new(0, 16, 0, 16),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://3926305904",
+		ImageRectOffset = Vector2.new(924, 724),
+		ImageRectSize = Vector2.new(36, 36),
+		ImageColor3 = Color3.fromRGB(150, 150, 150),
+		ImageTransparency = 1,
+		Visible = false,
+		ZIndex = 5,
+		Parent = boxBg
 	})
-	
+
+	local textOffsetX = hasIcon and 36 or 12
+	local textWidthLimit = 32 
 	
 	local inputvalue = library:Create("TextBox", {
-		Position = UDim2.new(0, 10, 0, 0),
-		Size = UDim2.new(1, -20, 1, 0),
+		Position = UDim2.new(0, textOffsetX, 0, 0),
+		Size = UDim2.new(1, -(textOffsetX + textWidthLimit), 1, 0),
 		BackgroundTransparency = 1,
-		Text = option.value,
+		Text = tostring(option.value or ""),
 		PlaceholderText = option.placeholder or "",
-		PlaceholderColor3 = Color3.fromRGB(100, 100, 100),
+		PlaceholderColor3 = Color3.fromRGB(100, 100, 105),
 		ClearTextOnFocus = option.clearOnFocus or false,
 		TextSize = 14,
 		Font = Enum.Font.Gotham,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextColor3 = Color3.fromRGB(240, 240, 240),
 		TextXAlignment = Enum.TextXAlignment.Left,
-		TextTruncate = Enum.TextTruncate.AtEnd, 
-		Parent = round
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = 2,
+		Parent = boxBg
 	})
+
 	
 	local inContact = false
 	local focused = false
-	
-	
-	local function triggerFocus()
-		if not focused then
-			inputvalue:CaptureFocus()
+	local accentColor = Color3.fromRGB(100, 150, 255) 
+
+	local function shakeBox()
+		local originalPos = boxBg.Position
+		local tweenInfo = TweenInfo.new(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 3, true)
+		tweenService:Create(boxBg, tweenInfo, {Position = originalPos + UDim2.new(0, 3, 0, 0)}):Play()
+		tweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 80, 80)}):Play()
+		task.delay(0.4, function()
+			if focused then
+				tweenService:Create(stroke, TweenInfo.new(0.2), {Color = accentColor}):Play()
+			else
+				tweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(50, 50, 55)}):Play()
+			end
+		end)
+	end
+
+	local function updateTextLogic()
+		local currentText = inputvalue.Text
+		
+		if option.numeric then
+			local newText = currentText:gsub("%D", "")
+			if newText ~= currentText then
+				inputvalue.Text = newText
+				currentText = newText
+				shakeBox()
+			end
+		end
+
+		if maxLength > 0 then
+			if #currentText > maxLength then
+				currentText = string.sub(currentText, 1, maxLength)
+				inputvalue.Text = currentText
+				shakeBox()
+			end
+			charCount.Text = tostring(#currentText) .. "/" .. tostring(maxLength)
+			
+			if #currentText == maxLength then
+				tweenService:Create(charCount, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 120, 120)}):Play()
+			else
+				tweenService:Create(charCount, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(120, 120, 120)}):Play()
+			end
+		end
+
+		if #currentText > 0 then
+			clearBtn.Visible = true
+			tweenService:Create(clearBtn, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
+		else
+			tweenService:Create(clearBtn, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
+			task.delay(0.2, function() if #inputvalue.Text == 0 then clearBtn.Visible = false end end)
+		end
+
+		if option.liveUpdate then
+			library.flags[option.flag] = currentText
+			option.value = currentText
+			task.spawn(function() pcall(option.callback, currentText, false) end)
 		end
 	end
 
-	main.InputBegan:connect(function(input)
-		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
-			triggerFocus()
-		end
+	inputvalue:GetPropertyChangedSignal("Text"):Connect(updateTextLogic)
+
+	clearBtn.MouseButton1Click:Connect(function()
+		inputvalue.Text = ""
+		inputvalue:CaptureFocus()
+		updateTextLogic()
+	end)
+
+	main.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = true
 			if not focused then
-				tweenService:Create(outline, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(210, 210, 210)}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Color = Color3.fromRGB(80, 80, 85)}):Play()
+				tweenService:Create(boxBg, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
 			end
 		end
 	end)
-	
-	main.InputEnded:connect(function(input)
+
+	main.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			inContact = false
 			if not focused then
-				tweenService:Create(outline, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Color = Color3.fromRGB(50, 50, 55)}):Play()
+				tweenService:Create(boxBg, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(25, 25, 28)}):Play()
 			end
 		end
 	end)
-	
-	
-	inputvalue.Focused:connect(function()
-		focused = true
-		tweenService:Create(outline, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-		tweenService:Create(title, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-		
-		accentLine:TweenSize(UDim2.new(1, 0, 0, 2), "Out", "Quint", 0.4, true)
-	end)
-	
-	
-	inputvalue.FocusLost:connect(function(enterPressed)
-		focused = false
-		
-		
-		accentLine:TweenSize(UDim2.new(0, 0, 0, 2), "Out", "Quint", 0.4, true)
-		
-		if inContact then
-			tweenService:Create(outline, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)}):Play()
-		else
-			tweenService:Create(outline, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-			tweenService:Create(title, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
-		end
 
+	inputvalue.Focused:Connect(function()
+		focused = true
+		tweenService:Create(stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Color = accentColor}):Play()
+		tweenService:Create(glow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0.6, Size = UDim2.new(1, 14, 1, 14)}):Play()
+		tweenService:Create(title, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+		if iconImage then tweenService:Create(iconImage, TweenInfo.new(0.3), {ImageColor3 = accentColor}):Play() end
+	end)
+
+	inputvalue.FocusLost:Connect(function(enterPressed)
+		focused = false
+		local targetStroke = inContact and Color3.fromRGB(80, 80, 85) or Color3.fromRGB(50, 50, 55)
+		local targetBg = inContact and Color3.fromRGB(30, 30, 35) or Color3.fromRGB(25, 25, 28)
 		
+		tweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Color = targetStroke}):Play()
+		tweenService:Create(boxBg, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = targetBg}):Play()
+		tweenService:Create(glow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 1, Size = UDim2.new(1, 20, 1, 20)}):Play()
+		tweenService:Create(title, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+		if iconImage then tweenService:Create(iconImage, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(120, 120, 120)}):Play() end
+
 		local finalText = inputvalue.Text
-		if option.numeric then
-			finalText = finalText:gsub("%D", "") 
-			if finalText == "" then finalText = "0" end
-			inputvalue.Text = finalText
-		end
+		if finalText == "" and option.numeric then finalText = "0" inputvalue.Text = finalText end
 		
 		option:SetValue(finalText, enterPressed)
 	end)
-	
-	
+
 	function option:SetValue(value, enter)
 		local val = tostring(value)
+		if self.numeric then val = val:gsub("%D", "") if val == "" then val = "0" end end
+		if maxLength > 0 and #val > maxLength then val = string.sub(val, 1, maxLength) end
+		
 		library.flags[self.flag] = val
 		self.value = val
-		inputvalue.Text = val
-		self.callback(val, enter)
+		
+		if inputvalue.Text ~= val then
+			inputvalue.Text = val
+		end
+		
+		task.spawn(function()
+			pcall(self.callback, val, enter)
+		end)
 	end
+
+	updateTextLogic()
+	
+	return option
 end
 
 local function createColorPickerWindow(option)
@@ -2369,8 +2470,13 @@ function parent:AddDivider(option)
 		option.text = tostring(option.text or "TextBox")
 		option.value = tostring(option.value or "")
 		option.placeholder = tostring(option.placeholder or "Type here…") 
+		
 		option.clearOnFocus = typeof(option.clearOnFocus) == "boolean" and option.clearOnFocus or false 
-		option.numeric = typeof(option.numeric) == "boolean" and option.numeric or false -- Mới
+		option.numeric = typeof(option.numeric) == "boolean" and option.numeric or false 
+		option.maxLength = typeof(option.maxLength) == "number" and option.maxLength or 0 
+		option.liveUpdate = typeof(option.liveUpdate) == "boolean" and option.liveUpdate or false 
+		option.icon = typeof(option.icon) == "string" and option.icon or "" 
+		
 		option.callback = typeof(option.callback) == "function" and option.callback or function() end
 		option.type = "box"
 		option.position = #self.options
@@ -2434,7 +2540,7 @@ function library:Watermark(options)
 	self.wmSettings = self.wmSettings or {
 		Title = "empty",
 		Rainbow = true,
-		Color = Color3.fromRGB(255, 255, 255), 
+		Color = Color3.fromRGB(0, 0, 0), 
 		Visible = true
 	}
 
