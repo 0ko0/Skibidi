@@ -3029,241 +3029,266 @@ function library:Watermark(options)
 		Title = "empty",
 		Rainbow = true,
 		Color = Color3.fromRGB(110, 150, 255), 
-		Visible = true,
-		ShowDeviceInfo = true,
-		ShowGameInfo = true
+		Visible = true
 	}
 
-	for k, v in pairs(options) do
-		self.wmSettings[k] = v
+	if options.Title ~= nil then self.wmSettings.Title = tostring(options.Title) end
+	if options.Visible ~= nil then self.wmSettings.Visible = options.Visible end
+	if options.Color ~= nil then 
+		self.wmSettings.Color = options.Color 
+		if options.Rainbow == nil then self.wmSettings.Rainbow = false end
 	end
+	if options.Rainbow ~= nil then self.wmSettings.Rainbow = options.Rainbow end
 
-	
 	if not self.base then
 		self.base = self:Create("ScreenGui", {
 			Name = "skibidi",
 			Parent = game:GetService("CoreGui"),
-			ResetOnSpawn = false,
-			IgnoreGuiInset = true,
-			ZIndexBehavior = Enum.ZIndexBehavior.Global
+			ResetOnSpawn = true,
+			IgnoreGuiInset = true
 		})
 	end
 
-	if self.wmContainer then self.wmContainer:Destroy() end
+	if not self.watermark then
+		self.wmContainer = self:Create("Frame", {
+			Name = "WatermarkContainer",
+			Position = UDim2.new(0, 20, 0, 20),
+			Size = UDim2.new(0, 0, 0, 34),
+			BackgroundTransparency = 1,
+			Parent = self.base,
+			Active = true
+		})
 
-	
-	local runService = game:GetService("RunService")
-	local inputService = game:GetService("UserInputService")
-	local tweenService = game:GetService("TweenService")
-	local statsService = game:GetService("Stats")
-	local players = game:GetService("Players")
-	local localPlayer = players.LocalPlayer
-	local marketService = game:GetService("MarketplaceService")
+		local auraGlow = self:Create("ImageLabel", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Size = UDim2.new(1, 40, 1, 40),
+			BackgroundTransparency = 1,
+			Image = "rbxassetid://6015897843",
+			ImageColor3 = self.wmSettings.Color,
+			ImageTransparency = 0.4,
+			SliceCenter = Rect.new(49, 49, 450, 450),
+			ScaleType = Enum.ScaleType.Slice,
+			ZIndex = 0,
+			Parent = self.wmContainer
+		})
 
-	
-	local isMobile = inputService.TouchEnabled and not inputService.MouseEnabled
-	local deviceIcon = isMobile and "📱" or "💻"
-	
-	
-	local gameName = "Roblox Game"
-	pcall(function()
-		gameName = marketService:GetProductInfo(game.PlaceId).Name
-		if string.len(gameName) > 15 then
-			gameName = string.sub(gameName, 1, 15) .. "..."
-		end
-	end)
+		self.watermark = self:Create("Frame", {
+			Name = "MainAcrylic",
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundColor3 = Color3.fromRGB(15, 15, 18),
+			BackgroundTransparency = 0.25,
+			BorderSizePixel = 0,
+			ClipsDescendants = true,
+			ZIndex = 2,
+			Parent = self.wmContainer
+		})
 
-	
-	self.wmContainer = self:Create("Frame", {
-		Name = "Watermark",
-		Position = UDim2.new(0, 20, 0, 20),
-		Size = UDim2.new(0, 0, 0, 32),
-		AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 1,
-		Parent = self.base,
-		Active = true
-	})
-	
-	self.watermark = self:Create("Frame", {
-		Name = "AcrylicBoard",
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundColor3 = Color3.fromRGB(12, 12, 15),
-		BackgroundTransparency = 0.15,
-		BorderSizePixel = 0,
-		ZIndex = 2,
-		Parent = self.wmContainer
-	})
+		self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.watermark })
 
-	self:Create("UICorner", { CornerRadius = UDim.new(0, 6), Parent = self.watermark })
+		local stroke = self:Create("UIStroke", {
+			Color = Color3.fromRGB(255, 255, 255),
+			Thickness = 1.5,
+			Transparency = 0.1,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Parent = self.watermark
+		})
+		local strokeGradient = self:Create("UIGradient", { Rotation = 0, Parent = stroke })
 
-	
-	local stroke = self:Create("UIStroke", {
-		Color = Color3.fromRGB(255, 255, 255),
-		Thickness = 1.5,
-		Transparency = 0,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-		Parent = self.watermark
-	})
-	local strokeGradient = self:Create("UIGradient", { Rotation = 0, Parent = stroke })
+		local topAccent = self:Create("Frame", {
+			Size = UDim2.new(1, 0, 0, 1),
+			Position = UDim2.new(0, 0, 0, 0),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BorderSizePixel = 0,
+			ZIndex = 3,
+			Parent = self.watermark
+		})
+		local accentGradient = self:Create("UIGradient", { Parent = topAccent })
 
-	
-	local wmText = self:Create("TextLabel", {
-		Size = UDim2.new(0, 0, 1, 0),
-		AutomaticSize = Enum.AutomaticSize.X,
-		Position = UDim2.new(0, 10, 0, 0),
-		BackgroundTransparency = 1,
-		Text = "",
-		TextSize = 13,
-		Font = Enum.Font.GothamMedium,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextXAlignment = Enum.TextXAlignment.Left,
-		RichText = true,
-		ZIndex = 3,
-		Parent = self.watermark
-	})
+		local wmText = self:Create("TextLabel", {
+			Size = UDim2.new(1, -24, 1, 0),
+			Position = UDim2.new(0, 12, 0, 0),
+			BackgroundTransparency = 1,
+			Text = "",
+			TextSize = 13,
+			Font = Enum.Font.GothamMedium,
+			TextColor3 = Color3.fromRGB(240, 240, 245),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			RichText = true,
+			ZIndex = 3,
+			Parent = self.watermark
+		})
 
-	
-	self:Create("UIPadding", {
-		PaddingLeft = UDim.new(0, 12),
-		PaddingRight = UDim.new(0, 12),
-		Parent = self.watermark
-	})
+		local isCollapsed = false
+		local wmDragging, wmDragInput, wmDragStart, wmStartPos
+		local dragStartTime = 0
 
-	
-	local dragging, dragInput, dragStart, startPos
-	local isCollapsed = false
-	local lastTap = 0
+		self.wmContainer.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				wmDragging = true
+				wmDragInput = input
+				wmDragStart = input.Position
+				wmStartPos = self.wmContainer.Position
+				dragStartTime = os.clock()
+			end
+		end)
 
-	local function clampPosition(pos)
-		local viewport = workspace.CurrentCamera.ViewportSize
-		local size = self.wmContainer.AbsoluteSize
-		local x = math.clamp(pos.X.Offset, 0, viewport.X - size.X)
-		local y = math.clamp(pos.Y.Offset, -36, viewport.Y - size.Y)
-		return UDim2.new(0, x, 0, y)
-	end
+		inputService.InputChanged:Connect(function(input)
+			if input == wmDragInput and wmDragging then
+				local delta = input.Position - wmDragStart
+				if delta.Magnitude > 2 then 
+					local viewport = workspace.CurrentCamera.ViewportSize
+					local wmSize = self.wmContainer.AbsoluteSize
+					local newX = math.clamp(wmStartPos.X.Offset + delta.X, 0, viewport.X - wmSize.X)
+					local newY = math.clamp(wmStartPos.Y.Offset + delta.Y, 0, viewport.Y - wmSize.Y)
 
-	self.wmContainer.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					tweenService:Create(self.wmContainer, TweenInfo.new(0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+						Position = UDim2.new(0, newX, 0, newY)
+					}):Play()
+				end
+			end
+		end)
+
+		inputService.InputEnded:Connect(function(input)
+			if input == wmDragInput then
+				wmDragging = false
+				wmDragInput = nil
+				if os.clock() - dragStartTime < 0.25 then 
+					local delta = input.Position - wmDragStart
+					if delta.Magnitude < 5 then 
+						isCollapsed = not isCollapsed
+						tweenService:Create(self.watermark, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+						}):Play()
+						task.wait(0.1)
+						tweenService:Create(self.watermark, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+							BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+						}):Play()
+					end
+				end
+			end
+		end)
+
+		
+		local currentFPS = 0
+		local frameHistory = {}
+		local maxFrames = 15 
+
+		runService.RenderStepped:Connect(function(deltaTime)
+			table.insert(frameHistory, deltaTime)
+			if #frameHistory > maxFrames then
+				table.remove(frameHistory, 1)
+			end
 			
-			local currentTime = tick()
-			if currentTime - lastTap < 0.3 then
-				isCollapsed = not isCollapsed
+			local totalDt = 0
+			for _, dt in ipairs(frameHistory) do
+				totalDt = totalDt + dt
+			end
+			
+			
+			currentFPS = math.round(1 / (totalDt / #frameHistory))
+		end)
+
+		local lastTargetWidth = 0
+		local rotationValue = 0
+		local localPlayer = game:GetService("Players").LocalPlayer
+		local statsService = game:GetService("Stats")
+
+		runService.Heartbeat:Connect(function(dt)
+			if not self.wmContainer.Visible then return end
+			local settings = self.wmSettings
+
+			
+			rotationValue = (rotationValue + (dt * 60)) % 360
+			strokeGradient.Rotation = rotationValue
+
+			local mainColor = settings.Color
+			if settings.Rainbow then
+				local h = tick() % 4 / 4
+				mainColor = Color3.fromHSV(h, 0.8, 1)
+				local color2 = Color3.fromHSV((h + 0.15) % 1, 0.8, 1)
 				
-				tweenService:Create(self.watermark, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-					BackgroundColor3 = isCollapsed and Color3.fromRGB(25, 25, 30) or Color3.fromRGB(12, 12, 15)
+				local seq = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, mainColor),
+					ColorSequenceKeypoint.new(0.5, color2),
+					ColorSequenceKeypoint.new(1, mainColor)
+				})
+				
+				strokeGradient.Color = seq
+				accentGradient.Color = seq
+			else
+				local h, s, v = Color3.toHSV(mainColor)
+				local color2 = Color3.fromHSV(h, s, math.clamp(v - 0.3, 0.2, 1))
+				local seq = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, mainColor),
+					ColorSequenceKeypoint.new(0.5, color2),
+					ColorSequenceKeypoint.new(1, mainColor)
+				})
+				strokeGradient.Color = seq
+				accentGradient.Color = seq
+			end
+			
+			auraGlow.ImageColor3 = mainColor
+			auraGlow.ImageTransparency = 0.3 + math.sin(tick() * 3) * 0.1
+
+			local targetWidth = 0
+			local titleHex = "#" .. mainColor:ToHex()
+			local dotHex = "<font color='#555555'> • </font>"
+
+			if isCollapsed then
+				local firstChar = string.sub(settings.Title, 1, 1)
+				wmText.Text = string.format("<b><font color='%s'>%s</font></b>", titleHex, firstChar)
+				wmText.TextXAlignment = Enum.TextXAlignment.Center
+				targetWidth = 34
+			else
+				
+				local ping = 0
+				local networkPing = localPlayer:GetNetworkPing() * 1000
+				if networkPing > 0 then
+					ping = math.round(networkPing)
+				else
+					
+					pcall(function()
+						ping = math.round(statsService.Network.ServerStatsItem["Data Ping"]:GetValue())
+					end)
+				end
+
+				
+				local fpsColor = currentFPS >= 55 and "#55FF55" or (currentFPS >= 30 and "#FFFF55" or "#FF5555")
+				local pingColor = ping <= 80 and "#55FF55" or (ping <= 150 and "#FFFF55" or "#FF5555")
+
+				
+				local timeStr = os.date("%H:%M:%S")
+				local playerName = localPlayer.Name
+				
+				
+				local finalText = string.format(
+					"<b><font color='%s'>%s</font></b>%s%s%s<font color='%s'>%d FPS</font>%s<font color='%s'>%dms</font>%s%s", 
+					titleHex, settings.Title, 
+					dotHex, playerName, 
+					dotHex, fpsColor, currentFPS, 
+					dotHex, pingColor, ping, 
+					dotHex, timeStr
+				)
+				
+				wmText.Text = finalText
+				wmText.TextXAlignment = Enum.TextXAlignment.Left
+
+				
+				local stripText = string.format("%s   %s   %d FPS   %dms   %s", settings.Title, playerName, currentFPS, ping, timeStr)
+				local textBounds = textService:GetTextSize(stripText, 13, Enum.Font.GothamMedium, Vector2.new(9999, 34))
+				targetWidth = textBounds.X + 24 
+			end
+
+			
+			if targetWidth ~= lastTargetWidth then
+				lastTargetWidth = targetWidth
+				tweenService:Create(self.wmContainer, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0), {
+					Size = UDim2.new(0, targetWidth, 0, 34)
 				}):Play()
 			end
-			lastTap = currentTime
-
-			dragging = true
-			dragStart = input.Position
-			startPos = self.wmContainer.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then dragging = false end
-			end)
-		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			
-			isCollapsed = not isCollapsed
-		end
-	end)
-
-	inputService.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			local delta = input.Position - dragStart
-			local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-			
-			
-			tweenService:Create(self.wmContainer, TweenInfo.new(0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-				Position = clampPosition(newPos)
-			}):Play()
-		end
-	end)
-
-	
-	local currentFPS = 0
-	local frameHistory = {}
-	runService.RenderStepped:Connect(function(dt)
-		table.insert(frameHistory, dt)
-		if #frameHistory > 20 then table.remove(frameHistory, 1) end
-		local total = 0
-		for _, v in ipairs(frameHistory) do total = total + v end
-		currentFPS = math.round(1 / (total / #frameHistory))
-	end)
-
-	
-	local rotationValue = 0
-	local colorHUE = 0
-
-	runService.Heartbeat:Connect(function(dt)
-		if not self.wmContainer.Visible then return end
-
-		local settings = self.wmSettings
-		
-		
-		rotationValue = (rotationValue + (dt * 50)) % 360
-		strokeGradient.Rotation = rotationValue
-
-		
-		local mainColor, secondColor
-		if settings.Rainbow then
-			colorHUE = (colorHUE + dt * 0.15) % 1
-			mainColor = Color3.fromHSV(colorHUE, 0.8, 1)
-			secondColor = Color3.fromHSV((colorHUE + 0.1) % 1, 0.8, 1)
-		else
-			mainColor = settings.Color
-			local h, s, v = Color3.toHSV(mainColor)
-			secondColor = Color3.fromHSV(h, s, math.clamp(v - 0.4, 0.2, 1))
-		end
-
-		strokeGradient.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, mainColor),
-			ColorSequenceKeypoint.new(0.5, secondColor),
-			ColorSequenceKeypoint.new(1, mainColor)
-		})
-		
-		local ping = 0
-		local netPing = localPlayer:GetNetworkPing() * 1000
-		if netPing > 0 then ping = math.round(netPing)
-		else pcall(function() ping = math.round(statsService.Network.ServerStatsItem["Data Ping"]:GetValue()) end) end
-
-		
-		local memoryUsage = 0
-		pcall(function() memoryUsage = math.round(statsService:GetTotalMemoryUsageMb()) end)
-
-		
-		local titleHex = "#" .. mainColor:ToHex()
-		local grayHex = "#888888"
-		local whiteHex = "#FFFFFF"
-		
-		
-		local fpsColor = currentFPS >= 60 and "#55FF55" or (currentFPS >= 30 and "#FFFF55" or "#FF5555")
-		local pingColor = ping <= 80 and "#55FF55" or (ping <= 150 and "#FFFF55" or "#FF5555")
-		
-		local timeStr = os.date("%I:%M:%S %p") 
-		local separator = string.format(" <font color='%s'>|</font> ", grayHex)
-
-		if isCollapsed then
-			
-			wmText.Text = string.format("<b><font color='%s'>%s</font></b>", titleHex, settings.Title)
-		else
-			
-			local parts = {
-				string.format("<b><font color='%s'>%s</font></b>", titleHex, settings.Title),
-				string.format("<font color='%s'>%s</font> <font color='%s'>%s</font>", grayHex, deviceIcon, whiteHex, localPlayer.Name)
-			}
-			
-			if settings.ShowGameInfo then
-				table.insert(parts, string.format("<font color='%s'>%s</font>", whiteHex, gameName))
-			end
-
-			table.insert(parts, string.format("<font color='%s'>%d</font><font color='%s'> fps</font>", fpsColor, currentFPS, grayHex))
-			table.insert(parts, string.format("<font color='%s'>%d</font><font color='%s'> ms</font>", pingColor, ping, grayHex))
-			table.insert(parts, string.format("<font color='%s'>%d</font><font color='%s'> MB</font>", whiteHex, memoryUsage, grayHex))
-			table.insert(parts, string.format("<font color='%s'>%s</font>", whiteHex, timeStr))
-
-			wmText.Text = table.concat(parts, separator)
-		end
-	end)
+		end)
+	end
 	
 	self.wmContainer.Visible = self.wmSettings.Visible
 end
