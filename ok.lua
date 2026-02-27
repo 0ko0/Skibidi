@@ -889,15 +889,15 @@ local function createBind(option, parent)
 end
 
 local function createSlider(option, parent)
-
+	
 	local accentColor = option.color or Color3.fromRGB(114, 137, 218)
 	local bgDark = Color3.fromRGB(20, 20, 22)
 	local bgLight = Color3.fromRGB(40, 40, 45)
 	local textColor = Color3.fromRGB(240, 240, 240)
-	local textMuted = Color3.fromRGB(150, 150, 150)
 	
 	option.locked = option.locked or false
 
+	
 	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
 		Size = UDim2.new(1, 0, 0, 55),
@@ -906,6 +906,7 @@ local function createSlider(option, parent)
 		Parent = parent.content
 	})
 	option.main = main
+	
 	
 	local topFrame = library:Create("Frame", {
 		Size = UDim2.new(1, -20, 0, 24),
@@ -924,6 +925,7 @@ local function createSlider(option, parent)
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = topFrame
 	})
+	
 	
 	local valueBg = library:Create("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -951,6 +953,7 @@ local function createSlider(option, parent)
 		Parent = valueBg
 	})
 
+	
 	local sliderArea = library:Create("TextButton", {
 		Position = UDim2.new(0, 10, 0, 32),
 		Size = UDim2.new(1, -20, 0, 16),
@@ -959,6 +962,7 @@ local function createSlider(option, parent)
 		AutoButtonColor = false,
 		Parent = main
 	})
+	
 	
 	local sliderBg = library:Create("Frame", {
 		AnchorPoint = Vector2.new(0, 0.5),
@@ -970,6 +974,7 @@ local function createSlider(option, parent)
 	})
 	library:Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = sliderBg })
 	library:Create("UIStroke", { Color = Color3.fromRGB(30, 30, 35), Thickness = 1, Parent = sliderBg })
+	
 	
 	local fill = library:Create("Frame", {
 		Size = UDim2.new(0, 0, 1, 0),
@@ -985,6 +990,7 @@ local function createSlider(option, parent)
 		}),
 		Parent = fill
 	})
+	
 	
 	local knob = library:Create("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1012,32 +1018,40 @@ local function createSlider(option, parent)
 		Parent = knob
 	})
 
+	
 	local sliding = false
 	local inContact = false
+	
 	
 	local function formatValue(val)
 		local decimals = 0
 		if option.float < 1 then
 			local strFloat = tostring(option.float)
 			local dotIndex = strFloat:find("%.")
-			if dotIndex then
-				decimals = #strFloat:sub(dotIndex + 1)
-			end
+			if dotIndex then decimals = #strFloat:sub(dotIndex + 1) end
 		end
 		local mult = 10 ^ decimals
-		local rounded = math.floor(val * mult + 0.5) / mult
+		local rounded = math.floor((val * mult) + 0.5) / mult
 		return string.format("%." .. decimals .. "f", rounded), rounded
 	end
 
+	
 	local function updateSlider(input)
-		local percent = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
-		local newValue = option.min + ((option.max - option.min) * percent)
-		option:SetValue(newValue)
+		
+		local width = math.max(sliderBg.AbsoluteSize.X, 1)
+		local percent = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / width, 0, 1)
+		
+		local min = math.min(option.min, option.max)
+		local max = math.max(option.min, option.max)
+
+		local newValue = min + ((max - min) * percent)
+		option:SetValue(newValue, true) 
 	end
 
 	sliderArea.InputBegan:Connect(function(input)
 		if option.locked then return end
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			inputvalue:ReleaseFocus() 
 			sliding = true
 			tweenService:Create(knob, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 16, 0, 16)}):Play()
 			tweenService:Create(knobGlow, TweenInfo.new(0.2), {ImageTransparency = 0.6, Size = UDim2.new(0, 34, 0, 34)}):Play()
@@ -1049,17 +1063,13 @@ local function createSlider(option, parent)
 	sliderArea.MouseEnter:Connect(function()
 		if option.locked then return end
 		inContact = true
-		if not sliding then
-			tweenService:Create(knobStroke, TweenInfo.new(0.2), {Thickness = 3}):Play()
-		end
+		if not sliding then tweenService:Create(knobStroke, TweenInfo.new(0.2), {Thickness = 3}):Play() end
 	end)
 	
 	sliderArea.MouseLeave:Connect(function()
 		if option.locked then return end
 		inContact = false
-		if not sliding then
-			tweenService:Create(knobStroke, TweenInfo.new(0.2), {Thickness = 2}):Play()
-		end
+		if not sliding then tweenService:Create(knobStroke, TweenInfo.new(0.2), {Thickness = 2}):Play() end
 	end)
 
 	inputService.InputChanged:Connect(function(input)
@@ -1091,25 +1101,32 @@ local function createSlider(option, parent)
 		local num = tonumber(rawText)
 		
 		if num then
-			option:SetValue(num)
+			option:SetValue(num, true) 
 		else
-			local formattedStr, _ = formatValue(option.value)
-			inputvalue.Text = formattedStr
+			option:SetValue(option.value, true)
 		end
 	end)
 
-	function option:SetValue(value)
-		value = math.clamp(value, self.min, self.max)
+	function option:SetValue(value, forceUpdateText)
+		local min = math.min(self.min, self.max)
+		local max = math.max(self.min, self.max)
+		
+		value = math.clamp(value, min, max)
+		
 		local formattedStr, finalValue = formatValue(value)
-		local percent = (finalValue - self.min) / (self.max - self.min)
+		
+		local range = max - min
+		if range == 0 then range = 0.0001 end
+		local percent = (finalValue - min) / range
 
 		tweenService:Create(fill, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(percent, 0, 1, 0)}):Play()
 		
 		library.flags[self.flag] = finalValue
 		self.value = finalValue
 		
-		if not inputvalue.IsFocused then
+		if forceUpdateText or not inputvalue.IsFocused then
 			inputvalue.Text = formattedStr
+			
 			local textBounds = textService:GetTextSize(formattedStr, 12, Enum.Font.Gotham, Vector2.new(999, 20))
 			local newBoxWidth = math.clamp(textBounds.X + 16, 35, 80)
 			tweenService:Create(valueBg, TweenInfo.new(0.2), {Size = UDim2.new(0, newBoxWidth, 0, 20)}):Play()
@@ -1126,7 +1143,7 @@ local function createSlider(option, parent)
 	function option:SetMinMax(min, max)
 		self.min = tonumber(min) or self.min
 		self.max = tonumber(max) or self.max
-		self:SetValue(self.value) 
+		self:SetValue(self.value, true) 
 	end
 
 	function option:SetColor(newColor)
@@ -1162,13 +1179,12 @@ local function createSlider(option, parent)
 		end
 	end
 
-	
-	option:SetValue(option.value)
+	option:SetValue(option.value, true)
 	if option.locked then option:SetLocked(true) end
 
 	setmetatable(option, {
 		__newindex = function(t, i, v)
-			if i == "Value" or i == "value" then t:SetValue(v)
+			if i == "Value" or i == "value" then t:SetValue(v, true)
 			elseif i == "Text" or i == "text" then t:SetText(v)
 			elseif i == "Locked" or i == "locked" then t:SetLocked(v)
 			elseif i == "Visible" or i == "visible" then t:SetVisible(v)
