@@ -11,13 +11,30 @@ local ui = Enum.UserInputType.MouseButton1
 local shortKeys = {
 	LeftControl = "LCtrl", RightControl = "RCtrl", LeftShift = "LShift", RightShift = "RShift",
 	LeftAlt = "LAlt", RightAlt = "RAlt", MouseButton1 = "MB1", MouseButton2 = "MB2", MouseButton3 = "MB3",
+	MouseButton4 = "MB4", MouseButton5 = "MB5",
 	Insert = "Ins", Delete = "Del", Backspace = "Back", Return = "Enter", Escape = "Esc",
-	PageUp = "PgUp", PageDown = "PgDn", Space = "Space", Unknown = "None"
+	PageUp = "PgUp", PageDown = "PgDn", Space = "Space",
+	ButtonX = "Xbox X", ButtonY = "Xbox Y", ButtonA = "Xbox A", ButtonB = "Xbox B",
+	ButtonR1 = "RB", ButtonL1 = "LB", ButtonR2 = "RT", ButtonL2 = "LT",
+	ButtonR3 = "RS", ButtonL3 = "LS", DPadUp = "D-Up", DPadDown = "D-Down", DPadLeft = "D-Left", DPadRight = "D-Right",
+	Unknown = "None"
 }
 
 local function formatKey(keyName)
 	if not keyName or keyName == "" then return "None" end
 	return shortKeys[keyName] or keyName
+end
+
+local function getIconForKey(keyName)
+	if keyName:find("MB") or keyName:find("Mouse") then
+		return "rbxassetid://140655072225632" 
+	elseif keyName:find("Xbox") or keyName:find("Button") or keyName:find("DPad") then
+		return "rbxassetid://96205762737948" 
+	elseif keyName == "None" then
+		return "rbxassetid://134588413858061" 
+	else
+		return "rbxassetid://77926385819793" 
+	end
 end
 
 local dragging, dragInput, dragStart, startPos, dragObject
@@ -674,124 +691,189 @@ local function createBind(option, parent)
 	local binding = false
 	local holding = false
 	local currentKey = option.key or "None"
-	
-	local main = library:Create("TextLabel", {
+	local accentColor = option.color or Color3.fromRGB(80, 160, 255) 
+
+	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 34),
+		Size = UDim2.new(1, 0, 0, 36),
 		BackgroundTransparency = 1,
-		Text = " " .. option.text,
-		TextSize = 17,
-		Font = Enum.Font.SourceSans,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = parent.content
 	})
-	
-	local bindContainer = library:Create("ImageLabel", {
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -6, 0.5, 0),
-		Size = UDim2.new(0, 40, 1, -10),
+
+	local titleBtn = library:Create("TextButton", {
+		Size = UDim2.new(1, -100, 1, 0),
+		Position = UDim2.new(0, 10, 0, 0),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://3570695787",
-		ImageColor3 = Color3.fromRGB(40, 40, 40),
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(100, 100, 100, 100),
-		SliceScale = 0.02,
+		Text = option.text,
+		TextSize = 15,
+		Font = Enum.Font.GothamMedium,
+		TextColor3 = Color3.fromRGB(220, 220, 220),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		AutoButtonColor = false,
 		Parent = main
 	})
-	
-	local bindText = library:Create("TextLabel", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Text = formatKey(currentKey),
-		TextSize = 15,
-		Font = Enum.Font.SourceSansSemibold,
-		TextColor3 = Color3.fromRGB(200, 200, 200),
+
+	local bindContainer = library:Create("TextButton", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -10, 0.5, 0),
+		Size = UDim2.new(0, 50, 0, 24),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 35),
+		AutoButtonColor = false,
+		Text = "",
+		ClipsDescendants = true,
+		Parent = main
+	})
+
+	library:Create("UICorner", {
+		CornerRadius = UDim.new(0, 6),
 		Parent = bindContainer
 	})
 
-	
+	local stroke = library:Create("UIStroke", {
+		Color = Color3.fromRGB(60, 60, 70),
+		Thickness = 1.2,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = bindContainer
+	})
+
+	local bindLayout = library:Create("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 4),
+		Parent = bindContainer
+	})
+
+	local bindIcon = library:Create("ImageLabel", {
+		Size = UDim2.new(0, 14, 0, 14),
+		BackgroundTransparency = 1,
+		Image = getIconForKey(currentKey),
+		ImageColor3 = Color3.fromRGB(180, 180, 180),
+		Parent = bindContainer
+	})
+
+	local bindText = library:Create("TextLabel", {
+		Size = UDim2.new(0, 0, 1, 0),
+		AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 1,
+		Text = formatKey(currentKey),
+		TextSize = 13,
+		Font = Enum.Font.GothamBold,
+		TextColor3 = Color3.fromRGB(180, 180, 180),
+		Parent = bindContainer
+	})
+
+	local glowTween = tweenService:Create(stroke, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Color = accentColor})
+
 	local function updateBindSize()
-		local textBounds = textService:GetTextSize(bindText.Text, 15, Enum.Font.SourceSansSemibold, Vector2.new(9e9, 9e9))
-		bindContainer:TweenSize(UDim2.new(0, textBounds.X + 16, 1, -10), "Out", "Quad", 0.15, true)
+		bindIcon.Image = getIconForKey(currentKey)
+		local bounds = textService:GetTextSize(bindText.Text, 13, Enum.Font.GothamBold, Vector2.new(9e9, 9e9))
+		local targetWidth = bounds.X + 28
+		tweenService:Create(bindContainer, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, targetWidth, 0, 24)}):Play()
 	end
 	updateBindSize()
 
-	
-	local pulseTween = tweenService:Create(bindContainer, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {ImageColor3 = Color3.fromRGB(80, 80, 80)})
-
-	local inContact
-	main.InputBegan:Connect(function(input)
+	bindContainer.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			inContact = true
 			if not binding then
-				tweenService:Create(bindContainer, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-				tweenService:Create(bindText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+				tweenService:Create(bindContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 45)}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(100, 100, 110)}):Play()
+				tweenService:Create(bindText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+				tweenService:Create(bindIcon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 			end
 		elseif input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
 			if not binding then
 				binding = true
 				bindText.Text = "..."
+				bindIcon.Image = "rbxassetid://10086818169" 
+				tweenService:Create(bindContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(25, 25, 30)}):Play()
+				glowTween:Play()
 				updateBindSize()
-				pulseTween:Play() 
 			end
 		end
 	end)
-	 
-	main.InputEnded:Connect(function(input)
+
+	bindContainer.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			inContact = false
 			if not binding then
-				tweenService:Create(bindContainer, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-				tweenService:Create(bindText, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+				tweenService:Create(bindContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
+				tweenService:Create(stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(60, 60, 70)}):Play()
+				tweenService:Create(bindText, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+				tweenService:Create(bindIcon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(180, 180, 180)}):Play()
 			end
 		end
 	end)
-	
+
+	titleBtn.MouseButton1Click:Connect(function()
+		if not binding then
+			
+			local rippleTween = tweenService:Create(titleBtn, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = accentColor})
+			rippleTween:Play()
+			task.delay(0.1, function()
+				tweenService:Create(titleBtn, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(220, 220, 220)}):Play()
+			end)
+			
+			if option.hold then
+				option.callback(true)
+				task.wait(0.1)
+				option.callback(false)
+			else
+				option.callback()
+			end
+		end
+	end)
+
+	local blacklist = {"Unknown", "MouseMovement", "Focus", "TextInput", "Touch"}
 	
 	inputService.InputBegan:Connect(function(input, gameProcessed)
-		if binding then
-			local key = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
-			
-			
-			if string.find(key, "MouseMovement") or string.find(key, "Touch") then return end
+		local keyName = (input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name) or input.UserInputType.Name
+		local isBlacklisted = table.find(blacklist, keyName) ~= nil
 
-			pulseTween:Cancel() 
+		if binding then
+			if isBlacklisted then return end
+
+			glowTween:Cancel()
 			
-			if key == "Escape" then
-				
-				option:SetKey(currentKey)
-			elseif key == "Backspace" or key == "Delete" then
-				
-				option:SetKey("None")
+			if keyName == "Escape" then
+				option:SetKey(currentKey) 
+			elseif keyName == "Backspace" or keyName == "Delete" then
+				option:SetKey("None") 
 			else
-				
-				option:SetKey(key)
+				option:SetKey(keyName) 
 			end
 		else
-			if gameProcessed then return end 
-			if currentKey ~= "None" then
-				if input.KeyCode.Name == currentKey or input.UserInputType.Name == currentKey then
-					if option.hold then
-						holding = true
-						option.callback(true)
-					else
-						option.callback()
-					end
+			if gameProcessed and keyName ~= currentKey then return end 
+			if currentKey ~= "None" and keyName == currentKey then
+				
+				tweenService:Create(bindContainer, TweenInfo.new(0.1), {Size = UDim2.new(0, bindContainer.AbsoluteSize.X - 4, 0, 20), BackgroundColor3 = accentColor}):Play()
+				tweenService:Create(bindText, TweenInfo.new(0.1), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+				tweenService:Create(bindIcon, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+
+				if option.hold then
+					holding = true
+					option.callback(true)
+				else
+					option.callback()
 				end
 			end
 		end
 	end)
-	
+
 	inputService.InputEnded:Connect(function(input)
-		if not binding and option.hold and holding then
-			if input.KeyCode.Name == currentKey or input.UserInputType.Name == currentKey then
+		local keyName = (input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name) or input.UserInputType.Name
+		if not binding and keyName == currentKey and currentKey ~= "None" then
+			
+			tweenService:Create(bindContainer, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, bindContainer.AbsoluteSize.X + 4, 0, 24), BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
+			tweenService:Create(bindText, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+			tweenService:Create(bindIcon, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+
+			if option.hold and holding then
 				holding = false
 				option.callback(false)
 			end
 		end
 	end)
-	
+
 	function option:SetKey(key)
 		binding = false
 		currentKey = key
@@ -801,9 +883,8 @@ local function createBind(option, parent)
 		bindText.Text = formatKey(key)
 		updateBindSize()
 		
-		
-		local endColor = inContact and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(40, 40, 40)
-		tweenService:Create(bindContainer, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = endColor}):Play()
+		tweenService:Create(stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(60, 60, 70)}):Play()
+		tweenService:Create(bindContainer, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 35)}):Play()
 	end
 end
 
@@ -1540,7 +1621,7 @@ local function createBox(option, parent)
 	
 	local main = library:Create("Frame", {
 		LayoutOrder = option.position,
-		Size = UDim2.new(1, 0, 0, 64), 
+		Size = UDim2.new(1, 0, 0, 56), 
 		BackgroundTransparency = 1,
 		Parent = parent.content
 	})
