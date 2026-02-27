@@ -3028,7 +3028,7 @@ function library:Watermark(options)
 	self.wmSettings = self.wmSettings or {
 		Title = "empty",
 		Rainbow = true,
-		Color = Color3.fromRGB(150, 110, 255), 
+		Color = Color3.fromRGB(110, 150, 255), 
 		Visible = true,
 		ShowDeviceInfo = true,
 		ShowGameInfo = true
@@ -3075,7 +3075,7 @@ function library:Watermark(options)
 
 	
 	self.wmContainer = self:Create("Frame", {
-		Name = "PremiumWatermark",
+		Name = "Watermark",
 		Position = UDim2.new(0, 20, 0, 20),
 		Size = UDim2.new(0, 0, 0, 32),
 		AutomaticSize = Enum.AutomaticSize.X,
@@ -3083,23 +3083,6 @@ function library:Watermark(options)
 		Parent = self.base,
 		Active = true
 	})
-
-	
-	local glowShadow = self:Create("ImageLabel", {
-		Name = "Glow",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, 40, 1, 40),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://5028857472", 
-		ImageColor3 = self.wmSettings.Color,
-		ImageTransparency = 0.3,
-		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(24, 24, 276, 276),
-		ZIndex = 0,
-		Parent = self.wmContainer
-	})
-
 	
 	self.watermark = self:Create("Frame", {
 		Name = "AcrylicBoard",
@@ -3237,12 +3220,6 @@ function library:Watermark(options)
 			ColorSequenceKeypoint.new(0.5, secondColor),
 			ColorSequenceKeypoint.new(1, mainColor)
 		})
-
-		
-		glowShadow.ImageColor3 = mainColor
-		glowShadow.ImageTransparency = 0.25 + math.sin(tick() * 2) * 0.15
-		glowShadow.Size = UDim2.new(1, 40 + math.sin(tick() * 3) * 5, 1, 40 + math.sin(tick() * 3) * 5)
-
 		
 		local ping = 0
 		local netPing = localPlayer:GetNetworkPing() * 1000
