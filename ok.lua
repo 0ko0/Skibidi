@@ -3136,12 +3136,7 @@ function library:Watermark(options)
 	if options.Rainbow ~= nil then self.wmSettings.Rainbow = options.Rainbow end
 
 	if not self.base then
-		self.base = self:Create("ScreenGui", {
-			Name = "skibidi",
-			Parent = game:GetService("CoreGui"),
-			ResetOnSpawn = true,
-			IgnoreGuiInset = true
-		})
+		self.base = self:Create("ScreenGui")
 	end
 
 	if not self.watermark then
@@ -3388,31 +3383,84 @@ function library:Watermark(options)
 	self.wmContainer.Visible = self.wmSettings.Visible
 end
 
+local function generateRandomName()
+    local HttpService = game:GetService("HttpService")
+    local randomName = HttpService:GenerateGUID(false):gsub("-", "")
+    return randomName
+end
+
+
+local function ProtectAndParentGui(gui)
+    
+    gui.Name = generateRandomName()
+    gui.ResetOnSpawn = false
+    gui.DisplayOrder = 2147483647
+    gui.IgnoreGuiInset = true
+    
+    
+    if set_thread_identity then set_thread_identity(8) end
+    gui.Archivable = false 
+
+    
+    local hui = (gethui and gethui()) or (get_hidden_gui and get_hidden_gui())
+    local protect = (syn and syn.protect_gui) or protect_gui or protectgui or (krnl and krnl.protectgui)
+    
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    
+    
+    if hui then
+        
+        if protect then pcall(protect, gui) end
+        gui.Parent = hui
+    elseif protect then
+        
+        pcall(protect, gui)
+        gui.Parent = CoreGui
+    else
+       
+        local successRobloxGui = pcall(function()
+            local robloxGui = CoreGui:FindFirstChild("RobloxGui")
+            if robloxGui then
+                gui.Parent = robloxGui
+            else
+                error("No RobloxGui")
+            end
+        end)
+
+        if not successRobloxGui then
+            local successCore = pcall(function()
+                gui.Parent = CoreGui
+            end)
+            
+            if not successCore then
+                local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+                gui.Parent = playerGui
+                warn("[Library] Warning: Your executor does not support hiding the GUI, basic stealth mode has been used")
+            end
+        end
+    end
+end
+
 function library:Init()
-	self.base = self.base or self:Create("ScreenGui")
-	if syn and syn.protect_gui then
-		syn.protect_gui(self.base)
-	elseif get_hidden_gui then
-		get_hidden_gui(self.base)
-	elseif gethui then
-		gethui(self.base)
-	else
-		game:GetService"Players".LocalPlayer:Kick("Error: protect_gui function not found")
-		return
-	end
-	self.base.Parent = game:GetService"CoreGui"
-	self.base.ResetOnSpawn = true
-	self.base.Name = "skibidi"
-	
-	
-	for _, window in next, self.windows do
-		if window.canInit and not window.init then
-			window.init = true
-			createOptionHolder(window.title, self.base, window)
-			loadOptions(window)
-		end
-	end
-	return self.base
+    self.base = self.base or self:Create("ScreenGui")
+    
+    ProtectAndParentGui(self.base)
+    
+    for _, window in next, self.windows do
+        if window.canInit and not window.init then
+            window.init = true
+            createOptionHolder(window.title, self.base, window)
+            loadOptions(window)
+        end
+    end
+    
+    if self.wmContainer then
+        self.wmContainer.Parent = self.base
+    end
+
+    return self.base
 end
 
 function library:Close()
