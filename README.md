@@ -13,7 +13,7 @@ local tab = library:CreateWindow("Your Title")
 
 ### Adding Folder
 ```lua
-local folder = tab:Addtab("tab")
+local folder = tab:AddFolder("tab")
 ```
 
 
