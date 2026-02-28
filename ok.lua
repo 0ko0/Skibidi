@@ -1,4 +1,26 @@
-local library = {flags = {}, windows = {}, open = true}
+local library = {
+    flags = {}, 
+    windows = {}, 
+    items = {}, 
+    open = true,
+    Connections = {}, 
+    
+    Theme = {         
+        Background = Color3.fromRGB(15, 15, 17),
+        WindowBg = Color3.fromRGB(25, 25, 30),
+        Accent = Color3.fromRGB(110, 150, 255),
+        Text = Color3.fromRGB(240, 240, 245),
+        TextDark = Color3.fromRGB(150, 150, 150),
+        ElementBg = Color3.fromRGB(30, 30, 35),
+        ElementHover = Color3.fromRGB(40, 40, 45),
+        Stroke = Color3.fromRGB(60, 60, 70)
+    }
+}
+
+function library:BindConnection(name, connection)
+    if self.Connections[name] then self.Connections[name]:Disconnect() end
+    self.Connections[name] = connection
+end
 
 --Services
 local runService = game:GetService"RunService"
@@ -85,13 +107,13 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	local size = subHolder and 34 or 40
 	local MAX_MENU_HEIGHT = 400 
 
-	parentTable.main = library:Create("Frame", {
+	parentTable.main = library:Create("CanvasGroup", { 
 		LayoutOrder = subHolder and parentTable.position or 0,
 		Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20),
-		Size = UDim2.new(0, 230, 0, size),
-		BackgroundColor3 = Color3.fromRGB(15, 15, 17),
+		Size = UDim2.new(0, 240, 0, size), 
+		BackgroundColor3 = library.Theme.Background, 
 		BackgroundTransparency = subHolder and 1 or 0.05,
-		ClipsDescendants = false, 
+		GroupTransparency = 0, 
 		Parent = parent
 	})
 	
@@ -173,12 +195,43 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	})
 	
 	local contentClip = library:Create("Frame", {
-		Position = UDim2.new(0, 0, 0, size),
-		Size = UDim2.new(1, 0, 1, -size),
+		Position = UDim2.new(0, 0, 0, size + 36), 
+		Size = UDim2.new(1, 0, 1, -(size + 36)),  
 		BackgroundTransparency = 1,
 		ClipsDescendants = true,
 		Parent = parentTable.main
 	})
+
+    local searchBox = library:Create("TextBox", {
+        Size = UDim2.new(1, -20, 0, 26),
+        Position = UDim2.new(0, 10, 0, size + 4),
+        BackgroundColor3 = library.Theme.ElementBg,
+        PlaceholderText = " search...",
+        Text = "",
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextColor3 = library.Theme.Text,
+        Parent = parentTable.main
+    })
+    library:Create("UICorner", {CornerRadius = UDim.new(0, 6), Parent = searchBox})
+    library:Create("UIStroke", {Color = library.Theme.Stroke, Thickness = 1, Parent = searchBox})
+
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = searchBox.Text:lower()
+        for _, item in pairs(parentTable.content:GetChildren()) do
+            if item:IsA("Frame") or item:IsA("TextButton") then
+                
+                local textLabel = item:FindFirstChildWhichIsA("TextLabel", true)
+                if textLabel then
+                    if query == "" or textLabel.Text:lower():find(query) then
+                        item.Visible = true
+                    else
+                        item.Visible = false
+                    end
+                end
+            end
+        end
+    end)
 
 	parentTable.content = library:Create("ScrollingFrame", {
 		Size = UDim2.new(1, 0, 1, 0),
@@ -2965,6 +3018,7 @@ function parent:AddDivider(option)
 		option.flag = option.flag or option.text
 		library.flags[option.flag] = option.state
 		table.insert(self.options, option)
+		library.items[option.flag] = option
 		
 		return option
 	end
@@ -2977,6 +3031,7 @@ function parent:AddDivider(option)
 		option.position = #self.options
 		option.flag = option.flag or option.text
 		table.insert(self.options, option)
+		library.items[option.flag] = option
 		
 		return option
 	end
@@ -2998,6 +3053,7 @@ function parent:AddDivider(option)
 		option.position = #self.options
 		option.flag = option.flag or option.text
 		library.flags[option.flag] = option.key
+		library.items[option.flag] = option
 		
 		table.insert(self.options, option)
 		return option
@@ -3018,6 +3074,7 @@ function parent:AddDivider(option)
 		option.flag = option.flag or option.text
 		library.flags[option.flag] = option.value
 		table.insert(self.options, option)
+		library.items[option.flag] = option
 		
 		return option
 	end
@@ -3042,6 +3099,7 @@ function parent:AddDivider(option)
 		option.flag = option.flag or option.text
 		library.flags[option.flag] = option.value
 		table.insert(self.options, option)
+		library.items[option.flag] = option
 		
 		return option
 	end
@@ -3064,6 +3122,7 @@ function parent:AddDivider(option)
 		option.flag = option.flag or option.text
 		library.flags[option.flag] = option.value
 		table.insert(self.options, option)
+		library.items[option.flag] = option
 		
 		return option
 	end
@@ -3080,6 +3139,7 @@ function parent:AddDivider(option)
 		option.flag = option.flag or option.text
 		library.flags[option.flag] = option.color
 		table.insert(self.options, option)
+		library.items[option.flag] = option
 		
 		return option
 	end
@@ -3102,6 +3162,47 @@ function parent:AddDivider(option)
 		
 		return option
 	end
+end
+
+function library:SaveConfig(configName)
+    local HttpService = game:GetService("HttpService")
+    if not isfolder or not writefile then 
+        return self:Notify({Title = "error", Content = "The executor does not support file saving", Type = "error"}) 
+    end
+    
+    if not isfolder("Configs") then makefolder("Configs") end
+    
+    local success, encoded = pcall(function() return HttpService:JSONEncode(self.flags) end)
+    if success then
+        writefile("Configs/" .. configName .. ".json", encoded)
+        self:Notify({Title = "Saved successfully", Content = "Saved: " .. configName, Type = "success"})
+    end
+end
+
+function library:LoadConfig(configName)
+    local HttpService = game:GetService("HttpService")
+    if not isfile or not readfile then return end
+    
+    local path = "Configs/" .. configName .. ".json"
+    if isfile(path) then
+        local success, decoded = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+        if success then
+            for flag, value in pairs(decoded) do
+                if self.flags[flag] ~= nil and self.items[flag] then
+            
+                    local obj = self.items[flag]
+                    pcall(function()
+                        if obj.SetState then obj:SetState(value)
+                        elseif obj.SetValue then obj:SetValue(value)
+                        elseif obj.SetColor then 
+                            obj:SetColor(Color3.new(value.R, value.G, value.B))
+                        end
+                    end)
+                end
+            end
+            self:Notify({Title = "Download successful", Content = "Downloaded: " .. configName, Type = "info"})
+        end
+    end
 end
 
 function library:CreateWindow(options)
@@ -3390,63 +3491,52 @@ local function generateRandomName()
 end
 
 
-local function ProtectAndParentGui(gui)
-    
-    gui.Name = generateRandomName()
+local function ProtectGui(gui)
+    local safe_cloneref = cloneref or function(o) return o end
+    local HttpService = safe_cloneref(game:GetService("HttpService"))
+    local CoreGui = safe_cloneref(game:GetService("CoreGui"))
+    local Players = safe_cloneref(game:GetService("Players"))
+
+    gui.Name = HttpService:GenerateGUID(false):gsub("-", "")
     gui.ResetOnSpawn = false
-    gui.DisplayOrder = 2147483647
     gui.IgnoreGuiInset = true
-    
-    
-    if set_thread_identity then set_thread_identity(8) end
+    gui.DisplayOrder = math.random(100000000, 999999999)
     gui.Archivable = false 
 
-    
-    local hui = (gethui and gethui()) or (get_hidden_gui and get_hidden_gui())
-    local protect = (syn and syn.protect_gui) or protect_gui or protectgui or (krnl and krnl.protectgui)
-    
-    local CoreGui = game:GetService("CoreGui")
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-    
-    
-    if hui then
-        
-        if protect then pcall(protect, gui) end
-        gui.Parent = hui
-    elseif protect then
-        
-        pcall(protect, gui)
-        gui.Parent = CoreGui
-    else
-       
-        local successRobloxGui = pcall(function()
-            local robloxGui = CoreGui:FindFirstChild("RobloxGui")
-            if robloxGui then
-                gui.Parent = robloxGui
-            else
-                error("No RobloxGui")
-            end
-        end)
-
-        if not successRobloxGui then
-            local successCore = pcall(function()
-                gui.Parent = CoreGui
-            end)
-            
-            if not successCore then
-                local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-                gui.Parent = playerGui
-                warn("[Library] Warning: Your executor does not support hiding the GUI, basic stealth mode has been used")
-            end
+    local scale = Instance.new("UIScale", gui)
+    local function updateScale()
+        local viewport = workspace.CurrentCamera.ViewportSize
+        if viewport.X < 850 then 
+            scale.Scale = 0.85 
+        elseif viewport.X > 1920 then 
+            scale.Scale = 1.25 
+        else 
+            scale.Scale = 1.0
         end
+    end
+    updateScale()
+    library:BindConnection("UIScaleUpdate", workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale))
+
+    pcall(function()
+        if setthreadidentity then setthreadidentity(8)
+        elseif set_thread_identity then set_thread_identity(8)
+        elseif setthreadcontext then setthreadcontext(8) end
+    end)
+
+    local hidden_container
+    pcall(function() hidden_container = (gethui and gethui()) or (get_hidden_gui and get_hidden_gui()) end)
+
+    if hidden_container then
+        gui.Parent = hidden_container
+    else
+        pcall(function() gui.Parent = CoreGui:FindFirstChild("RobloxGui") or CoreGui end)
     end
 end
 
 function library:Init()
     self.base = self.base or self:Create("ScreenGui")
     
-    ProtectAndParentGui(self.base)
+    ProtectGui(self.base)
     
     for _, window in next, self.windows do
         if window.canInit and not window.init then
@@ -3464,16 +3554,23 @@ function library:Init()
 end
 
 function library:Close()
-	if typeof(self.base) ~= "Instance" then end
-	self.open = not self.open
-	if self.activePopup then
-		self.activePopup:Close()
-	end
-	for _, window in next, self.windows do
-		if window.main then
-			window.main.Visible = self.open
-		end
-	end
+    if typeof(self.base) ~= "Instance" then return end
+    self.open = not self.open
+    
+    if self.activePopup then
+        self.activePopup:Close()
+    end
+    
+    for _, window in next, self.windows do
+        if window.main then
+            
+            tweenService:Create(window.main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                GroupTransparency = self.open and 0 or 1
+            }):Play()
+            
+            window.main.Interactable = self.open
+        end
+    end
 end
 
 inputService.InputBegan:connect(function(input)
@@ -3830,11 +3927,16 @@ function library:Notify(options)
 	end)
 end
 
-wait(1)
-local VirtualUser=game:service'VirtualUser'
-game:service('Players').LocalPlayer.Idled:connect(function()
-VirtualUser:CaptureController()
-VirtualUser:ClickButton2(Vector2.new())
+task.spawn(function()
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    local Players = game:GetService("Players")
+    
+    Players.LocalPlayer.Idled:Connect(function()
+        
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.RightShift, false, game)
+        task.wait(0.1)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.RightShift, false, game)
+    end)
 end)
 
 return library
