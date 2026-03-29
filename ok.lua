@@ -4056,7 +4056,8 @@ function library.ConfigManager:GetConfigs()
 	for _, file in ipairs(listfiles(self.Folder .. "/Configs")) do
 		local fileName = file:match("([^/\\]+)$")
 		if fileName and fileName:find(self.Extension) then
-			table.insert(list, fileName:gsub(self.Extension, ""))
+			
+			table.insert(list, (fileName:gsub(self.Extension, "")))
 		end
 	end
 	return list
