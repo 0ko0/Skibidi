@@ -176,6 +176,11 @@ library:Close()
 library:Init()
 ```
 
+### Toggle UI
+```lua
+library:ToggleUI(Enum.KeyCode.RightControl)
+```
+
 ### adding watermark
 ```lua
 library:Watermark({
