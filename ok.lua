@@ -3854,10 +3854,10 @@ function library:SetToggle(keybind)
 
 		local toggleBtn = Instance.new("ImageButton")
 		toggleBtn.Name = "ToggleBtn"
-		toggleBtn.Position = UDim2.new(0.5, -25, 0, 10)
-		toggleBtn.Size = UDim2.new(0, 45, 0, 45)
+		toggleBtn.Position = UDim2.new(0, 10, 0.5, -25)
+		toggleBtn.Size = UDim2.new(0, 40, 0, 40)
 		toggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-		toggleBtn.Image = "rbxassetid://6031094667" 
+		toggleBtn.Image = "rbxassetid://106145589924979" 
 		toggleBtn.ImageColor3 = Color3.fromRGB(110, 150, 255)
 		toggleBtn.Parent = toggleGui
 
