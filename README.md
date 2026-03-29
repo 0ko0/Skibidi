@@ -164,16 +164,20 @@ tab:AddBind({
 })
 ```
 
-### Close Lib
+### config
 ```lua
-
 local config = tab:AddFolder("setting")
 
 library:config(config) 
 ----------------------------------------
-library:Close()
+library:config()
 ```
 
+
+### Close Lib
+```lua
+library:Close()
+```
 
 
 ### Final (REQUIRED OR THE UI WILL NOT SHOW)
