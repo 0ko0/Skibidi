@@ -3860,27 +3860,24 @@ function library:ToggleUI(keybind)
 	local toggleBtn, iconImage, auraGlow, strokeGradient
 	local isMobile = inputService.TouchEnabled or inputService:GetLastInputType() == Enum.UserInputType.Touch
 
-	-- [1] XỬ LÝ PHÍM TẮT TRÊN MÁY TÍNH
 	inputService.InputBegan:Connect(function(input, gameProcessed)
 		if not gameProcessed and input.KeyCode == toggleKey then
 			library:Close()
 			if iconImage then
-				-- Xoay icon 360 độ và đổi hình khi bấm phím
+				
 				tweenService:Create(iconImage, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = library.open and 0 or 360}):Play()
 				iconImage.Image = library.open and "rbxassetid://97536509958555" or "rbxassetid://105048918205765"
 			end
 		end
 	end)
-
-	-- [2] XỬ LÝ NÚT NỔI CHO MOBILE (HOẶC CHUỘT NẾU MUỐN THỬ NGHIỆM)
-	if isMobile or true then -- Để 'or true' nếu bạn muốn test trên cả PC
+	
+	if isMobile or true then 
 		local toggleGui = Instance.new("ScreenGui")
-		toggleGui.Name = "Skibidi_AdvancedToggle"
+		toggleGui.Name = "skibidii"
 		toggleGui.ResetOnSpawn = false
 		toggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 		toggleGui.IgnoreGuiInset = true
-
-		-- Protect GUI khỏi bị detect
+		
 		pcall(function()
 			local CoreGui = game:GetService("CoreGui")
 			if gethui then toggleGui.Parent = gethui()
@@ -3888,7 +3885,6 @@ function library:ToggleUI(keybind)
 			else toggleGui.Parent = CoreGui end
 		end)
 		
-		-- Hitbox tàng hình để kéo thả mượt hơn
 		local dragHitbox = Instance.new("Frame")
 		dragHitbox.Name = "DragHitbox"
 		dragHitbox.Size = UDim2.new(0, 48, 0, 48)
@@ -3896,35 +3892,30 @@ function library:ToggleUI(keybind)
 		dragHitbox.BackgroundTransparency = 1
 		dragHitbox.Parent = toggleGui
 
-		-- Hào quang phát sáng (Aura Breathing)
 		auraGlow = Instance.new("ImageLabel")
 		auraGlow.AnchorPoint = Vector2.new(0.5, 0.5)
 		auraGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
 		auraGlow.Size = UDim2.new(1, 40, 1, 40)
 		auraGlow.BackgroundTransparency = 1
-		auraGlow.Image = "rbxassetid://6015897843"
+		auraGlow.Image = "rbxassetid://1316045217" 
 		auraGlow.ImageColor3 = Color3.fromRGB(110, 150, 255)
 		auraGlow.ImageTransparency = 0.5
-		auraGlow.ScaleType = Enum.ScaleType.Slice
-		auraGlow.SliceCenter = Rect.new(49, 49, 450, 450)
+		auraGlow.ScaleType = Enum.ScaleType.Stretch 
 		auraGlow.ZIndex = 0
 		auraGlow.Parent = dragHitbox
-
-		-- Bóng mờ (Drop Shadow)
+		
 		local shadow = Instance.new("ImageLabel")
 		shadow.AnchorPoint = Vector2.new(0.5, 0.5)
 		shadow.Position = UDim2.new(0.5, 0, 0.5, 4)
 		shadow.Size = UDim2.new(1, 10, 1, 10)
 		shadow.BackgroundTransparency = 1
-		shadow.Image = "rbxassetid://4731308832"
+		shadow.Image = "rbxassetid://1316045217" 
 		shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-		shadow.ImageTransparency = 0.4
-		shadow.ScaleType = Enum.ScaleType.Slice
-		shadow.SliceCenter = Rect.new(21, 21, 278, 278)
+		shadow.ImageTransparency = 0.5
+		shadow.ScaleType = Enum.ScaleType.Stretch
 		shadow.ZIndex = 1
 		shadow.Parent = dragHitbox
-
-		-- Body chính của nút (Glassmorphism)
+		
 		toggleBtn = Instance.new("TextButton")
 		toggleBtn.Name = "MainButton"
 		toggleBtn.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -3939,10 +3930,9 @@ function library:ToggleUI(keybind)
 		toggleBtn.Parent = dragHitbox
 
 		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0.5, 0) -- Hình tròn hoàn hảo
+		corner.CornerRadius = UDim.new(0.5, 0) 
 		corner.Parent = toggleBtn
-
-		-- Viền Gradient phát sáng quay tròn
+		
 		local stroke = Instance.new("UIStroke")
 		stroke.Thickness = 2
 		stroke.Color = Color3.fromRGB(255, 255, 255)
@@ -3955,8 +3945,7 @@ function library:ToggleUI(keybind)
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(110, 150, 255))
 		})
 		strokeGradient.Parent = stroke
-
-		-- Icon chính
+		
 		iconImage = Instance.new("ImageLabel")
 		iconImage.AnchorPoint = Vector2.new(0.5, 0.5)
 		iconImage.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -3966,42 +3955,36 @@ function library:ToggleUI(keybind)
 		iconImage.ImageColor3 = Color3.fromRGB(240, 240, 245)
 		iconImage.ZIndex = 3
 		iconImage.Parent = toggleBtn
-
-		-- [3] ANIMATION LUÔN CHẠY (Heartbeat)
+		
 		local rotation = 0
 		local auraPulse = 0
 		runService.Heartbeat:Connect(function(dt)
-			if toggleGui.Parent then
-				-- Xoay viền gradient
+			if toggleGui.Parent then				
 				rotation = (rotation + dt * 100) % 360
 				strokeGradient.Rotation = rotation
-				
-				-- Nhịp thở của Aura glow
+								
 				auraPulse = auraPulse + dt * 3
 				auraGlow.Size = UDim2.new(1, 35 + math.sin(auraPulse) * 10, 1, 35 + math.sin(auraPulse) * 10)
 				auraGlow.ImageTransparency = 0.5 + math.sin(auraPulse) * 0.2
 			end
 		end)
-
-		-- [4] VẬT LÝ KÉO THẢ & NAM CHÂM BÁM VIỀN (ĐÃ FIX LỖI GIẬT/BAY LÊN XUỐNG)
+		
 		local dragging = false
 		local isClick = true
 		local dragStartPos = nil
 		local startHitboxPos = nil
 		local targetPos = dragHitbox.Position
-
-		-- Hàm mượt mà hóa di chuyển (Lerp)
+		
 		runService.RenderStepped:Connect(function()
 			if not dragging then
-				-- Snap nam châm mượt mà khi không giữ chuột
+				
 				dragHitbox.Position = dragHitbox.Position:Lerp(targetPos, 0.15)
 			else
-				-- Khi đang giữ chuột, khóa targetPos lại bằng vị trí hiện tại để không bị giật
+				
 				targetPos = dragHitbox.Position
 			end
 		end)
-
-		-- Hiệu ứng Ripple nước khi bấm
+		
 		local function createRipple(x, y)
 			local ripple = Instance.new("ImageLabel")
 			ripple.BackgroundTransparency = 1
@@ -4027,8 +4010,7 @@ function library:ToggleUI(keybind)
 				isClick = true
 				dragStartPos = input.Position
 				startHitboxPos = dragHitbox.Position
-
-				-- Đã đổi sang Quint: Khi ấn xuống nút sẽ lún êm ái, KHÔNG bị nảy lên xuống
+				
 				tweenService:Create(toggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(1, -8, 1, -8)}):Play()
 				tweenService:Create(iconImage, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 18, 0, 18)}):Play()
 			end
@@ -4040,36 +4022,32 @@ function library:ToggleUI(keybind)
 				if delta.Magnitude > 5 then
 					isClick = false 
 				end
-				-- Tính toán giới hạn màn hình
+				
 				local viewport = workspace.CurrentCamera.ViewportSize
 				local newX = math.clamp(startHitboxPos.X.Offset + delta.X, 0, viewport.X - 48)
 				local newY = math.clamp(startHitboxPos.Y.Offset + delta.Y, 0, viewport.Y - 48)
 				
 				dragHitbox.Position = UDim2.new(0, newX, 0, newY)
-				targetPos = dragHitbox.Position -- Đồng bộ targetPos lập tức
+				targetPos = dragHitbox.Position 
 			end
 		end)
 
 		toggleBtn.InputEnded:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
 				dragging = false
-
-				-- Thả ra dùng Back để có độ nảy Pop 3D cực mượt
+				
 				tweenService:Create(toggleBtn, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)}):Play()
 				tweenService:Create(iconImage, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 24, 0, 24)}):Play()
 
 				if isClick then
-					targetPos = dragHitbox.Position -- Khóa chặt tọa độ, triệt tiêu lỗi bay giật
+					targetPos = dragHitbox.Position 
 
-					-- Tạo gợn sóng ngay vị trí bấm
 					local relativeX = input.Position.X - toggleBtn.AbsolutePosition.X
 					local relativeY = input.Position.Y - toggleBtn.AbsolutePosition.Y
 					createRipple(relativeX, relativeY)
-
-					-- Bật/tắt menu
-					library:Close()
 					
-					-- Đổi màu viền và xoay icon
+					library:Close()
+										
 					local newColor = library.open and Color3.fromRGB(110, 150, 255) or Color3.fromRGB(110, 150, 255)
 					strokeGradient.Color = ColorSequence.new({
 						ColorSequenceKeypoint.new(0, newColor),
@@ -4081,16 +4059,16 @@ function library:ToggleUI(keybind)
 					tweenService:Create(iconImage, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = library.open and 0 or 360}):Play()
 					iconImage.Image = library.open and "rbxassetid://97536509958555" or "rbxassetid://105048918205765"
 				else
-					-- TÍNH TOÁN NAM CHÂM BÁM VIỀN TỰ ĐỘNG KHI KÉO THẢ
+					
 					local viewport = workspace.CurrentCamera.ViewportSize
 					local currentX = dragHitbox.Position.X.Offset
 					local currentY = dragHitbox.Position.Y.Offset
 					
 					local snapX
 					if currentX < (viewport.X / 2) then
-						snapX = 15 -- Bám mép trái
+						snapX = 15 
 					else
-						snapX = viewport.X - 48 - 15 -- Bám mép phải
+						snapX = viewport.X - 48 - 15 
 					end
 					
 					targetPos = UDim2.new(0, snapX, 0, currentY)
