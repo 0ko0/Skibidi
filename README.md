@@ -1,6 +1,6 @@
 ### library
 ```lua
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/0ko0/Skibidi/refs/heads/main/ok.lua",true))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/0ko0/gui1/refs/heads/main/ok.lua",true))()
 ```
 
 
